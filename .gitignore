@@ -1,0 +1,7 @@
+releases/
+build/
+dist/
+.venv/
+.unused/
+*__pycache__
+*.egg-info/
