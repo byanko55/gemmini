@@ -11,7 +11,7 @@ class Point(Geometry):
         px:int, 
         py:int, 
         **kwargs
-    ):
+    ) -> None:
         """
         A single pixel
 
@@ -24,8 +24,11 @@ class Point(Geometry):
         self.px = px
         self.py = py
 
-    def coords(self):
+    def coords(self) -> np.ndarray:
         return np.array([[self.px, self.py]])
+    
+    def size(self) -> float:
+        return 0
 
-    def length(self):
+    def __len__(self) -> int:
         return 1
