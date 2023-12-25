@@ -5,3 +5,4 @@ dist/
 .unused/
 *__pycache__
 *.egg-info/
+*.ipynb
