@@ -8,18 +8,18 @@ __all__ = [
 class Point(Geometry):
     def __init__(
         self, 
-        px:int, 
-        py:int, 
+        px:float, 
+        py:float, 
         **kwargs
     ) -> None:
         """
         A single pixel
 
         Args:
-            px (int): x-coordinate
-            py (int): y-coordinate
+            px (float): x-coordinate
+            py (float): y-coordinate
         """
-        super().__init__(gem_type="point", **kwargs)
+        super().__init__(gem_type="Point", **kwargs)
 
         self.px = px
         self.py = py
