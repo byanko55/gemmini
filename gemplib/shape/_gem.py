@@ -1,6 +1,5 @@
 
 from gemplib.misc import *
-from math import log10
 
 class Geometry:
     def __init__(
@@ -77,6 +76,7 @@ class Geometry:
 
     def __getitem__(self, item:int) -> Tuple[Any, Any]:
         raise NotImplementedError
+
         
 def bounding_box(gem:Geometry) -> Tuple[float, float, float, float]:
     """
