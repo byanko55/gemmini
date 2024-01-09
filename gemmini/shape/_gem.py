@@ -1,5 +1,5 @@
 
-from gemplib.misc import *
+from gemmini.misc import *
 
 class Geometry:
     def __init__(
@@ -8,7 +8,7 @@ class Geometry:
         **kwargs
     ) -> None:
         """
-        Basic structure of gemplib geometry instance
+        Basic structure of gemmini geometry instance
         It also includes a collection of transformation operations.
 
         All subclasses should overwrite 

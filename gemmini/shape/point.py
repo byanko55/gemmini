@@ -1,6 +1,6 @@
-from gemplib.misc import *
-from gemplib.shape._gem import *
-from gemplib.shape.coords import dist
+from gemmini.misc import *
+from gemmini.shape._gem import *
+from gemmini.shape.coords import dist
 
 __all__ = [
     "Point",

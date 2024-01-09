@@ -1,5 +1,5 @@
-from gemplib.misc import *
-from gemplib.shape.point import *
+from gemmini.misc import *
+from gemmini.shape.point import *
 
 if __name__ == "__main__":
     p = Point(3,4)

@@ -6,13 +6,13 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gemplib"
+name = "gemmini"
 dynamic = ["version"]
 authors = [
     {name = "Yankos", email = "byanko55@gmail.com"},
 ]
 maintainers = [
-    {name = "gemplib contributors"},
+    {name = "gemmini contributors"},
 ]
 description = "Python package for constructing and handling geometric objects"
 readme = "README.rst"
@@ -42,14 +42,14 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/byanko55/gemplib"
-Repository = "https://github.com/byanko55/gemplib"
+Documentation = "https://github.com/byanko55/gemmini"
+Repository = "https://github.com/byanko55/gemmini"
 
 [tool.setuptools]
 include-package-data = false
 
 [tool.setuptools.packages.find]
-include = ["gemplib", "gemplib.*"]
+include = ["gemmini", "gemmini.*"]
 
 [tool.coverage.run]
-source = ["gemplib"]
+source = ["gemmini"]

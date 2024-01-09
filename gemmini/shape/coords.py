@@ -1,4 +1,4 @@
-from gemplib.misc import *
+from gemmini.misc import *
 
 __all__ = [
     "dist",

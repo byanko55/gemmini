@@ -1,5 +1,5 @@
-from gemplib.misc import *
-from gemplib.shape.coords import *
+from gemmini.misc import *
+from gemmini.shape.coords import *
 
 if __name__ == "__main__":
     assert _isNumber(3) == True
