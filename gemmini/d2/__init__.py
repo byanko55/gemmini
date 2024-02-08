@@ -1,1 +1,1 @@
-from gemmini.d2.point import *
+from gemmini.d2.point2D import *

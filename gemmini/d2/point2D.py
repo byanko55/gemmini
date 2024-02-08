@@ -1,5 +1,5 @@
 from gemmini.misc import *
-from gemmini.d2._gem import *
+from gemmini.d2._gem2D import *
 from gemmini.calc.coords import dist
 
 __all__ = [
@@ -24,13 +24,10 @@ class Point2D(Geometry2D):
         self.px = px
         self.py = py
         
-        super().__init__(gem_type="Point", **kwargs)
+        super().__init__(gem_type="Point2D", **kwargs)
 
-    def coords(self) -> np.ndarray:
+    def _base_coords(self) -> np.ndarray:
         return np.array([[self.px, self.py]])
-    
-    def size(self) -> float:
-        return 0
 
     def __len__(self) -> int:
         return 1
@@ -55,14 +52,10 @@ class Pointcloud2D(Geometry2D):
                 [ERROR] Pointcloud: check every points to conform the 2D format (x, y) \
             ")
         
-        super().__init__(gem_type="Pointcloud", **kwargs)
+        super().__init__(gem_type="Pointcloud2D", **kwargs)
         
-    def coords(self) -> np.ndarray:
+    def _base_coords(self) -> np.ndarray:
         return self.points
-    
-    def size(self) -> float:
-        mx, my, Mx, My = bounding_box(self)
-        return dist((mx, my), (Mx, My))
 
     def __len__(self) -> int:
         return len(self.points)
