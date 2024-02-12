@@ -26,12 +26,15 @@ def dist(p:Tuple[Any, ...], q:Tuple[Any, ...]) -> float:
 def _isNumber(n):
     return isinstance(n, (int, float, np.number)) 
 
-def _isPoint(p:Tuple[Any, ...]) -> bool:
+def _isPoint(p:Tuple[Any, ...], dim:int = None) -> bool:
     if not isinstance(p, (tuple, list, np.ndarray)):
         return False
     
     if len(p) < 2 or len(p) > 3:
         warnings.warn("We do not support dimensions except 2d or 3d")
+        return False
+    
+    if dim != None and len(p) != dim:
         return False
     
     return all(_isNumber(i) for i in p)
