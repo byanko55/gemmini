@@ -2,7 +2,7 @@ releases/
 build/
 dist/
 .venv/
-.unused/
+.etc/
 *__pycache__
 *.egg-info/
 *.ipynb

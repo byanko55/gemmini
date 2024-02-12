@@ -1,11 +1,5 @@
 from gemmini.misc import *
 from gemmini.d2._gem2D import *
-from gemmini.calc.coords import dist
-
-__all__ = [
-    "Point2D",
-    "Pointcloud2D"
-]
 
 class Point2D(Geometry2D):
     def __init__(
@@ -49,7 +43,7 @@ class Pointcloud2D(Geometry2D):
         
         if len(self.points.shape) != 2 or self.points.shape[1] != 2 :
             raise ValueError(" \
-                [ERROR] Pointcloud: check every points to conform the 2D format (x, y) \
+                [ERROR] Pointcloud2D: check every points to conform the 2D format (x, y) \
             ")
         
         super().__init__(gem_type="Pointcloud2D", **kwargs)
