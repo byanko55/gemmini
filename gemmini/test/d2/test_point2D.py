@@ -14,3 +14,5 @@ if __name__ == "__main__":
     print("width x height:", pc.dim())
     print("radius: ", pc.rad())
     plot(pc)
+
+    print("2~5th dots: ", pc[1:4])

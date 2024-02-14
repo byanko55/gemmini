@@ -15,7 +15,6 @@ class Geometry2D:
         All subclasses should overwrite 
             1) `_base_coords`, a list of original (x, y) coordinates of vertices.
             2) `__len__`, which is expected to return the diameter of the given geometry.
-            3) `__getitem__`, supporting fetching a pixel point for a given index.
 
         Args:
             gem_type (str): explicit type of a geometric object
@@ -91,4 +90,6 @@ class Geometry2D:
         raise NotImplementedError
 
     def __getitem__(self, item:int) -> Tuple[Any, Any]:
-        raise NotImplementedError
+        coord = self.coords()
+
+        return coord[item].tolist()
