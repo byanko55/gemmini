@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
-
-__version__ = "0.0.2"
+from gemmini import __version__
 
 if __name__ == "__main__":
     setup(

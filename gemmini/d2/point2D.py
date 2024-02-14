@@ -15,10 +15,13 @@ class Point2D(Geometry2D):
             px (float): x-coordinate
             py (float): y-coordinate
         """
+
+        gem_type = self.__class__.__name__
+
         self.px = px
         self.py = py
         
-        super().__init__(gem_type="Point2D", **kwargs)
+        super().__init__(gem_type=gem_type, **kwargs)
 
     def _base_coords(self) -> np.ndarray:
         return np.array([[self.px, self.py]])
@@ -37,16 +40,19 @@ class Pointcloud2D(Geometry2D):
         A discrete set of data points in 2D space
 
         Args:
-            points (Union[list, np.ndarray]): set of cartesian coordinates (x, y)
+            points (list): set of cartesian coordinates (x, y)
         """
+
+        gem_type = self.__class__.__name__
+
         self.points = np.array(points)
         
         if len(self.points.shape) != 2 or self.points.shape[1] != 2 :
             raise ValueError(" \
-                [ERROR] Pointcloud2D: check every points to conform the 2D format (x, y) \
-            ")
+                [ERROR] %s: check every points to conform the 2D format (x, y) \
+            "%(gem_type))
         
-        super().__init__(gem_type="Pointcloud2D", **kwargs)
+        super().__init__(gem_type=gem_type, **kwargs)
         
     def _base_coords(self) -> np.ndarray:
         return self.points

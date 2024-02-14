@@ -18,18 +18,20 @@ class Line2D:
             slope (float): The slope of the line.
         """
 
+        gem_type = self.__class__.__name__
+
         if (p2 == None and slope == None) or (p2 != None and slope != None):
-            raise ValueError("[ERROR] Line2D: Either p2 or slope has to be given")
+            raise ValueError("[ERROR] %s: Either p2 or slope has to be given"%(gem_type))
         
         if not _isPoint(p1, dim=2) or (p2 != None and not _isPoint(p2, dim=2)):
             raise ValueError(" \
-                [ERROR] Line2D: check every points to conform the 2D format (x, y) \
-            ")
+                [ERROR] %s: check every points to conform the 2D format (x, y) \
+            "%(gem_type))
         
         if slope != None and not _isNumber(slope):
             raise ValueError(" \
-                [ERROR] Line2D: slope should be a numeric value \
-            ")
+                [ERROR] %s: slope should be a numeric value \
+            "%(gem_type))
         
         self.p1 = p1
         self.p2 = p2
