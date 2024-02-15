@@ -5,7 +5,7 @@ from gemmini.calc.coords import _isNumber, _isPoint, rotate_2D
 class Polygon2D(Geometry2D):
     def __init__(
         self,
-        vertices:Union[list, np.ndarray],
+        v:Union[list, np.ndarray] = None,
         **kwargs
     ) -> None:
         """
@@ -14,20 +14,23 @@ class Polygon2D(Geometry2D):
         Args:
             vertices (Union[list, np.ndarray]): set of polygon's vertices (or corners).
         """
-        self.vertices = np.array(vertices)
+        gem_type = self.__class__.__name__
         
-        if len(self.vertices.shape) != 2 or self.vertices.shape[1] != 2 :
+        self.v = assignArg(gem_type, [v], ['vertices'], kwargs)
+        self.v = np.array(self.v)
+        
+        if len(self.v.shape) != 2 or self.v.shape[1] != 2 :
             raise ValueError(" \
                 [ERROR] Polygon2D: check every vertices to conform the 2D format (x, y) \
             ")
         
-        super().__init__(gem_type="Polygon2D", **kwargs)
+        super().__init__(gem_type=gem_type, **kwargs)
         
     def _base_coords(self) -> np.ndarray:
-        return self.vertices
+        return self.v
 
     def __len__(self) -> int:
-        return len(self.vertices)
+        return len(self.v)
     
 def line_segment2D(p1:Tuple[float, float], p2:Tuple[float, float]):
     if not _isPoint(p1, dim=2) or not _isPoint(p2, dim=2):
@@ -50,7 +53,7 @@ class Segment(Geometry2D):
         You can draw it in 2 ways:
 
             1) by specifying the `length` and `slope` of the line segment
-                ex) Segment(3, size=128, slope=75)
+                ex) Segment(3, size=128, slope=pi/3)
             2) by specifying the `coordinates` of two end-points: 'p1', 'p2'
                 ex) Segment(3, p1 = (8,8), p2 = (10,10))
 
@@ -96,8 +99,8 @@ class Segment(Geometry2D):
 
             d = -self.uS/2 + self.uS*np.arange(self.nD)/(self.nD-1)
 
-            coord[:, 0] = d * cos(pi*self.aG/180)
-            coord[:, 1] = d * sin(pi*self.aG/180)
+            coord[:, 0] = d * cos(self.aG)
+            coord[:, 1] = d * sin(self.aG)
 
             return coord
         else :
@@ -153,7 +156,7 @@ class RegularPolygon(Geometry2D):
     
     def _draw_edge(self, v, e):
         dx = -self.uS/2 + self.uS*e/(self.nD-1)
-        dy = self.uS/(2*tan(pi/self.nV))
+        dy = -self.uS/(2*tan(pi/self.nV))
         
         rx, ry = rotate_2D((dx, dy), 2*v*pi/self.nV)
         
@@ -180,7 +183,7 @@ class Parallelogram(Geometry2D):
             w | width (float): length of horizontal edge
             nY | num_ydot (int): number of dots consisting of a vertical edge
             nX | num_xdot (int): number of dots consisting of a horizontal edge
-            a | angle (float): interior angle (unit: degrees, °)
+            a | angle (float): interior angle (unit: radian)
         """
         
         gem_type = self.__class__.__name__
@@ -194,33 +197,32 @@ class Parallelogram(Geometry2D):
 
         if self.nX < 2 or self.nY < 2 :
             raise ValueError("[ERROR] %s: each side should consist of at least 2 dots"%(gem_type))
-    
-        if self.aG <= 0 or self.aG >= 180:
-            raise ValueError("[ERROR] %s: interior angle should be in range (0, 180)"%(gem_type))
         
         super().__init__(gem_type=gem_type, **kwargs)
         
     def _base_coords(self) -> np.ndarray:
-        coord = []
+        top = Segment(
+            num_dot=self.nX, 
+            p1 = ((-self.w + self.h*cos(self.aG))/2, self.h*sin(self.aG)/2), 
+            p2 = ((self.w + self.h*cos(self.aG))/2, self.h*sin(self.aG)/2)
+        )
+        right = Segment(
+            num_dot=self.nY, 
+            p1 = ((self.w + self.h*cos(self.aG))/2, self.h*sin(self.aG)/2), 
+            p2 = ((self.w - self.h*cos(self.aG))/2, -self.h*sin(self.aG)/2)
+        )
+        bottom = Segment(
+            num_dot=self.nX, 
+            p1 = ((self.w - self.h*cos(self.aG))/2, -self.h*sin(self.aG)/2), 
+            p2 = ((-self.w - self.h*cos(self.aG))/2, -self.h*sin(self.aG)/2)
+        )
+        left = Segment(
+            num_dot=self.nY, 
+            p1 = ((-self.w - self.h*cos(self.aG))/2, -self.h*sin(self.aG)/2), 
+            p2 = ((-self.w + self.h*cos(self.aG))/2, self.h*sin(self.aG)/2)
+        )
         
-        for i in range(self.nX):
-            fig = Segment(
-                num_dot=self.nY, 
-                size=self.h/sin(self.aG), 
-                slope=180*self.aG/pi
-            )
-
-            fig.translate(mx = int(-self.w/2 + i*self.w/(self.nX-1)))
-            
-            if 0 < i and i < self.nX - 1:
-                idx = [0, self.nY-1]
-                coord += fig[idx]
-            else :
-                coord += fig[:]
-        
-        coord = np.array(coord)
-
-        return coord
+        return connect_edges(top, right, bottom, left)
         
     def __len__(self) -> int:
         return 2*(self.nX + self.nY - 2)
@@ -257,21 +259,28 @@ class Rhombus(Geometry2D):
         super().__init__(gem_type=gem_type, **kwargs)
 
     def _base_coords(self) -> np.ndarray:
-        coord = []
+        top = Segment(
+            num_dot=self.nD, 
+            p1 = (0, self.h/2), 
+            p2 = (self.w/2, 0)
+        )
+        right = Segment(
+            num_dot=self.nD, 
+            p1 = (self.w/2, 0), 
+            p2 = (0, -self.h/2)
+        )
+        bottom = Segment(
+            num_dot=self.nD, 
+            p1 = (0, -self.h/2), 
+            p2 = (-self.w/2, 0)
+        )
+        left = Segment(
+            num_dot=self.nD, 
+            p1 = (-self.w/2, 0), 
+            p2 = (0, self.h/2)
+        )
         
-        for i in range(2*self.nD - 1):
-            x = -self.w/2 + i*self.w/(2*self.nD-2)
-            y = (self.nD - 1 - abs(self.nD-1-i))/(self.nD-1) * self.h/2
-            
-            if i == 0:
-                coord.insert(0, [x, 0])
-            elif i == 2*(self.nD-1):
-                coord.insert(-1, [x, 0])
-            else :
-                coord.insert(0, [x, y])
-                coord.insert(-1, [x, -y])
-        
-        return np.array(coord)
+        return connect_edges(top, right, bottom, left)
 
     def __len__(self) -> int:
         return 4*(self.nD - 1)
@@ -325,44 +334,26 @@ class Trapezoid(Geometry2D):
     def _base_coords(self) -> np.ndarray:
         top = Segment(
             num_dot=self.ntD, 
-            p1 = (-self.wt/2 + self.translate_top, -self.h/2), 
-            p2 = (self.wt/2 + self.translate_top, -self.h/2)
-        )
-        bottom = Segment(
-            num_dot=self.nbD, 
-            p1 = (self.wb/2, self.h/2), 
-            p2 = (-self.wb/2, self.h/2)
-        )
-        left = Segment(
-            num_dot=self.nsD, 
-            p1 = (-self.wb/2, self.h/2), 
-            p2 = (-self.wt/2 + self.translate_top, -self.h/2)
+            p1 = (-self.wt/2 + self.translate_top, self.h/2), 
+            p2 = (self.wt/2 + self.translate_top, self.h/2)
         )
         right = Segment(
             num_dot=self.nsD, 
-            p1 = (self.wt/2 + self.translate_top, -self.h/2), 
-            p2 = (self.wb/2, self.h/2)
+            p1 = (self.wt/2 + self.translate_top, self.h/2), 
+            p2 = (self.wb/2, -self.h/2)
         )
-
-        coord_top = top[:]
-        coord_bottom = bottom[:]
-        coord_left = left[:]
-        coord_right = right[:]
-
-        coord = np.concatenate(
-            (
-                coord_top[:-1], 
-                coord_right[:-1], 
-                coord_bottom[:-1], 
-                coord_left[:-1]
-            ),
-            axis=0
+        bottom = Segment(
+            num_dot=self.nbD, 
+            p1 = (self.wb/2, -self.h/2), 
+            p2 = (-self.wb/2, -self.h/2)
+        )
+        left = Segment(
+            num_dot=self.nsD, 
+            p1 = (-self.wb/2, -self.h/2), 
+            p2 = (-self.wt/2 + self.translate_top, self.h/2)
         )
         
-        coord, idxs = np.unique(coord, axis=0, return_index=True)
-        coord = coord[idxs.argsort()]
-
-        return coord
+        return connect_edges(top, right, bottom, left)
 
     def __len__(self) -> int:
         return self.nbD + self.ntD + 2*self.nsD - 4
@@ -374,7 +365,7 @@ def RightTrapezoid(
     nD:Union[int, Tuple[int, int, int]] = None,
     **kwargs
 ):
-    return Trapezoid(h, wt, wb, nD, (wt-wb)/2, kwargs)
+    return Trapezoid(h, wt, wb, nD, (wt-wb)/2, **kwargs)
     
 class Rectangle(Geometry2D):
     def __init__(
@@ -416,23 +407,28 @@ class Rectangle(Geometry2D):
         super().__init__(gem_type=gem_type, **kwargs)
 
     def _base_coords(self) -> np.ndarray:
-        x = np.linspace(-self.w/2, self.w/2, self.nwD)
-        y = np.linspace(-self.h/2, self.h/2, self.nhD)
-        xv, yv = np.meshgrid(x, y)
-
-        coord = np.array((xv, yv))
-        coord = np.transpose(coord.reshape(2, -1))
-
-        border = np.where(
-            (coord[:, 0] == np.min(xv)) |
-            (coord[:, 0] == np.max(xv)) | 
-            (coord[:, 1] == np.min(yv)) | 
-            (coord[:, 1] == np.max(yv))
+        top = Segment(
+            num_dot=self.nwD, 
+            p1 = (-self.w/2, self.h/2), 
+            p2 = (self.w/2, self.h/2)
         )
-
-        coord = coord[border]
-
-        return coord
+        right = Segment(
+            num_dot=self.nhD, 
+            p1 = (self.w/2, self.h/2), 
+            p2 = (self.w/2, -self.h/2)
+        )
+        bottom = Segment(
+            num_dot=self.nwD, 
+            p1 = (self.w/2, -self.h/2), 
+            p2 = (-self.w/2, -self.h/2)
+        )
+        left = Segment(
+            num_dot=self.nhD, 
+            p1 = (-self.w/2, -self.h/2), 
+            p2 = (-self.w/2, self.h/2)
+        )
+        
+        return connect_edges(top, right, bottom, left)
 
     def __len__(self) -> int:
         return 2*(self.nwD + self.nhD - 2)
@@ -440,40 +436,60 @@ class Rectangle(Geometry2D):
 class Kite(Geometry2D):
     def __init__(
         self,
-        h:float = None,
-        w:float = None,
-        nY:int = None,
-        nX:int = None,
+        a:float,
+        b:float,
+        nD:int = None,
         **kwargs
     ):
         """
         A quadrilateral with reflection symmetry across a diagonal.
 
         Args:
-            h | height (float): length of vertical diagonals
-            w | width (float): length of horizontal diagonals
+            a, b (float, float): length of each side
             nD | num_dot (int): number of dots consisting of a edge
         """
         
         gem_type = self.__class__.__name__
+        
+        self.a = a
+        self.b = b
 
-        self.h, self.w, self.nY, self.nX = assignArg(
-            gem_type, 
-            [h, w, nY, nX], 
-            ['height', 'width', 'num_ydot', 'num_xdot'], 
-            kwargs
-        )
+        self.nD = assignArg(gem_type, [nD], ['num_dot'], kwargs)
 
-        if self.nX < 2 or self.nY < 2 :
+        if self.nD < 2 :
             raise ValueError("[ERROR] %s: each side should consist of at least 2 dots"%(gem_type))
 
         super().__init__(gem_type=gem_type, **kwargs)
 
     def _base_coords(self) -> np.ndarray:
-        pass
+        _a = self.a/sqrt(self.a*self.a + self.b*self.b)
+        _b = self.b/sqrt(self.a*self.a + self.b*self.b)
+        
+        top = Segment(
+            num_dot=self.nD, 
+            p1 = (0, self.a*_a), 
+            p2 = (self.a*_b, 0)
+        )
+        right = Segment(
+            num_dot=self.nD, 
+            p1 = (self.a*_b, 0), 
+            p2 = (0, -self.b*_b)
+        )
+        bottom = Segment(
+            num_dot=self.nD, 
+            p1 = (0, -self.b*_b), 
+            p2 = (-self.a*_b, 0)
+        )
+        left = Segment(
+            num_dot=self.nD, 
+            p1 = (-self.a*_b, 0), 
+            p2 = (0, self.a*_a)
+        )
+        
+        return connect_edges(top, right, bottom, left)
 
     def __len__(self) -> int:
-        return 2*(self.nX + self.nY - 1)
+        return 4*(self.nD - 1)
     
 class ConcaveStar(Geometry2D):
     def __init__(
@@ -514,10 +530,7 @@ class ConcaveStar(Geometry2D):
         orD = self.uS * sin(ang) / (cos(2*ang)*cos(ang) + sin(2*ang)*sin(ang))
         irD = self.uS / (cos(ang) + sin(ang)*tan(2*ang))
 
-        coord_ss = self._draw_substar(orD)
-        coord_ip = self._draw_polygon(irD, 2)
-
-        coord = np.concatenate((coord_ss, coord_ip), axis=0)
+        coord = self._draw_substar(orD)
 
         return coord
     
@@ -529,24 +542,26 @@ class ConcaveStar(Geometry2D):
                 dx = self.uS - orD*sin(2*pi/self.nV)*e/(self.nD-1)
                 dy = -orD*cos(2*pi/self.nV)*e/(self.nD-1)
                 
-                rx, ry = rotate_2D(dx, dy, v*2*pi/self.nV)
+                rx, ry = rotate_2D((dx, dy), v*2*pi/self.nV)
                 coord.append([rx, ry])
-            for e in range(1, self.nD-1):
+            for e in range(1, self.nD):
                 dx = self.uS - orD*sin(2*pi/self.nV)*e/(self.nD-1)
                 dy = orD*cos(2*pi/self.nV)*e/(self.nD-1)
                 
-                rx, ry = rotate_2D(dx, dy, v*2*pi/self.nV)
+                rx, ry = rotate_2D((dx, dy), v*2*pi/self.nV)
                 coord.append([rx, ry])
 
         coord = np.array(coord)
 
         return coord
 
-    def _draw_polygon(self, irD, inD):
-        fig = RegularPolygon(size=irD, num_vertex=self.nV, num_dot=inD)
-        fig.rotate(180/self.nV)
-
-        return fig.get_subcoord()
-
     def __len__(self) -> int:
         return self.nV*(2*self.nD-2)
+    
+def connect_edges(*args:Segment) -> np.ndarray:
+    coord = args[0][:-1]
+    
+    for seg in args[1:]:
+        coord = np.concatenate((coord, seg[:-1]), axis=0)
+    
+    return coord
