@@ -2,8 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import warnings
-from math import sqrt, cos, sin, tan, pi, log2
+from math import sqrt, cos, sin, tan, pi, log10
 from typing import Callable, Any, List, Optional, Tuple, Union
+
+COORDINATES = Union[Tuple, List, np.ndarray]
 
 def assignArg(gem_type:str, list_abbrs:List[Any], list_full_names:List[str], kwargs):
     res = []
