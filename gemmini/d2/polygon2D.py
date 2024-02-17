@@ -33,6 +33,12 @@ class Polygon2D(Geometry2D):
         return len(self.v)
     
 def line_segment2D(p1:Tuple[float, float], p2:Tuple[float, float]):
+    """
+    A one-dimensional line segment joining two vertices
+    
+    Args:
+        p1, p2 (float, float): coordinates of two vertices
+    """
     if not _isPoint(p1, dim=2) or not _isPoint(p2, dim=2):
         raise ValueError(" \
             [ERROR] line_segment2D: check every points to conform the 2D format (x, y) \
@@ -365,6 +371,18 @@ def RightTrapezoid(
     nD:Union[int, Tuple[int, int, int]] = None,
     **kwargs
 ):
+    """
+    A right trapezoid has two adjacent right angles.
+
+    Args:
+        h | height (float): height of the trapezoid
+        wt | width_top (float): width of the top side
+        wb | width_bottom (float): width of the bottom side
+        nD | num_dot (int | (int, int, int)): number of dots consisting of top/bottom/vertical side
+            If a single numeric value is given, then every edge have the same number of dots.
+            Or, you can determine the number of dots in each sides differently by giving a tuple for the `num_dot` argument. 
+            ex) num_dot = (2,4,5): top=2, bottom=4, vertical edge=5
+    """
     return Trapezoid(h, wt, wb, nD, (wt-wb)/2, **kwargs)
     
 class Rectangle(Geometry2D):
@@ -559,6 +577,15 @@ class ConcaveStar(Geometry2D):
         return self.nV*(2*self.nD-2)
     
 def connect_edges(*args:Segment) -> np.ndarray:
+    """
+    Merge at least two edges into a single polygon.
+    
+    Args:
+        *args (Segment ...): A series of `Segment` to be assembled with
+
+    Returns:
+        coord (np.ndarray): (x, y) coordinates consisting of the resulted polygon.
+    """
     coord = args[0][:-1]
     
     for seg in args[1:]:
