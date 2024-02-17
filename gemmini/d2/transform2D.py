@@ -427,7 +427,7 @@ def flipDiagonal(coord:COORDINATES) -> np.ndarray:
 
 def dot(coord:COORDINATES, m:np.ndarray) -> np.ndarray:
     """
-    Dot product of a given coordinates and a matrix with dimension: (2, 2)
+    Dot product of given coordinates and a matrix with dimension: (2, 2)
 
     Args:
         coord (COORDINATES): a matrix of 2D coordinates
@@ -440,7 +440,7 @@ def dot(coord:COORDINATES, m:np.ndarray) -> np.ndarray:
 
     return _c @ m
 
-def distort(coord:COORDINATES, method='barrel', rate:float = 0.5):
+def distort(coord:COORDINATES, method='barrel', rate:float = 0.5) -> np.ndarray:
     """
     Distorts a point set using various distorting methods.
 
@@ -451,7 +451,6 @@ def distort(coord:COORDINATES, method='barrel', rate:float = 0.5):
             - pincushion: magnification increases with the distance from the optical axis.
         rate (float) : distortion coefficients
     """
-
     if method not in ['barrel', 'pincushion']:
         raise ValueError("[Error] distort: `method` argument should be either `barrel` or `pincushion`")
 
@@ -478,7 +477,7 @@ def distort(coord:COORDINATES, method='barrel', rate:float = 0.5):
 
     return np.stack((rx, ry), axis=1)
 
-def focus(coord:COORDINATES, p:Tuple[float, float], rate:float = 0.5):
+def focus(coord:COORDINATES, p:Tuple[float, float], rate:float = 0.5) -> np.ndarray:
     """
     Pull the coordinates into a given pivot point
 
@@ -487,7 +486,6 @@ def focus(coord:COORDINATES, p:Tuple[float, float], rate:float = 0.5):
         p (float, float): (x, y) positions of pivot point
         rate (float) : distortion factor to apply
     """
-    
     _c = to_ndarray(coord)
     x = _c[:, 0]
     y = _c[:, 1]
@@ -505,7 +503,7 @@ def focus(coord:COORDINATES, p:Tuple[float, float], rate:float = 0.5):
 
     return np.stack((rx, ry), axis=1)
 
-def shatter(coord:COORDINATES, p:Tuple[float, float], rate:float = 0.5):
+def shatter(coord:COORDINATES, p:Tuple[float, float], rate:float = 0.5) -> np.ndarray:
     """
     Repel the coordinates away from a given pivot point
 
