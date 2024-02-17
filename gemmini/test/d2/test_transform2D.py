@@ -184,26 +184,38 @@ if __name__ == "__main__":
     p = Pointcloud2D(c)
     print("Dot: [[1, 0.5], [-0.5, -2]]")
     plot(p)
-    
-    # TBD
-    """
+
     c = distort(coord)
     p = Pointcloud2D(c)
-    print("Distort: method='barrel', rate=-1")
+    print("Distort: method='barrel', rate=0.5")
     plot(p)
     
-    c = distort(coord, rate=-1)
+    c = distort(coord, rate=1.0)
     p = Pointcloud2D(c)
-    print("Distort: method='barrel', rate=-1")
+    print("Distort: method='barrel', rate=1.0")
     plot(p)
     
     c = distort(coord, method='pincushion')
     p = Pointcloud2D(c)
-    print("Distort: method='pincushion', rate=1")
+    print("Distort: method='pincushion', rate=0.5")
     plot(p)
     
-    c = distort(coord, rate=[-1, 0.5, 0.3, 0.7])
+    c = focus(coord, p=[25,25])
     p = Pointcloud2D(c)
-    print("Distort: method='barrel', rate=[-1, 0.5, 0.3, 0.7]")
+    print("Focus: p=(25,25)")
     plot(p)
-    """
+    
+    c = focus(coord, p=[25,25], rate=2)
+    p = Pointcloud2D(c)
+    print("Focus: p=(25,25), rate=2")
+    plot(p)
+    
+    c = shatter(coord, p=[25,25])
+    p = Pointcloud2D(c)
+    print("Shatter: p=(25,25)")
+    plot(p)
+    
+    c = shatter(coord, p=[25,25], rate=2)
+    p = Pointcloud2D(c)
+    print("Shatter: p=(25,25), rate=2")
+    plot(p)

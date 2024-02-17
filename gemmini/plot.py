@@ -33,9 +33,6 @@ def plot(gem:List[Any]) -> None:
         mtick_lb, mtick_rb = (_tu/2)*(lb//(_tu/2) + 1), (_tu/2)*(rb//(_tu/2))
         mtick_bb, mtick_tb = (_tu/2)*(bb//(_tu/2) + 1), (_tu/2)*(tb//(_tu/2))
 
-        print(lb, rb, bb, tb, _u, _v, _u*(lb//_u), _u*(rb//_u), _u*(bb//_u), _u*(tb//_u))
-        print((tick_rb-tick_lb)//_u + 1, (tick_tb-tick_bb)//_u + 1)
-
         ax.set_xlim([lb, rb])
         ax.set_ylim([bb, tb])
         ax.set_xticks(np.linspace(tick_lb, tick_rb, int((tick_rb-tick_lb)//_tu + 1)))

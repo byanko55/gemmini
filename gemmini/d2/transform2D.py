@@ -132,10 +132,10 @@ def rotateX(coord:COORDINATES, a:float = None, **kwargs) -> np.ndarray:
     """
     a = assignArg("rotateX", [a], ['angle'], kwargs)
 
-    coord = to_ndarray(coord)
+    _c = to_ndarray(coord)
     
-    x = coord[:, 0]
-    y = coord[:, 1]
+    x = _c[:, 0]
+    y = _c[:, 1]
 
     rx = x
     ry = y*cos(a)
@@ -152,10 +152,10 @@ def rotateY(coord:COORDINATES, a:float = None, **kwargs) -> np.ndarray:
     """
     a = assignArg("rotateY", [a], ['angle'], kwargs)
 
-    coord = to_ndarray(coord)
+    _c = to_ndarray(coord)
     
-    x = coord[:, 0]
-    y = coord[:, 1]
+    x = _c[:, 0]
+    y = _c[:, 1]
 
     rx = x*cos(a)
     ry = y
@@ -172,10 +172,10 @@ def rotateZ(coord:COORDINATES, a:float = None, **kwargs) -> np.ndarray:
     """
     a = assignArg("rotateZ", [a], ['angle'], kwargs)
 
-    coord = to_ndarray(coord)
+    _c = to_ndarray(coord)
     
-    x = coord[:, 0]
-    y = coord[:, 1]
+    x = _c[:, 0]
+    y = _c[:, 1]
 
     rx = x*cos(a) - y*sin(a)
     ry = x*sin(a) + y*cos(a)
@@ -199,10 +199,10 @@ def rotate3D(coord:COORDINATES, a1:float = None, a2:float = None, a3:float = Non
         kwargs
     )
 
-    coord = to_ndarray(coord)
+    _c = to_ndarray(coord)
     
-    x = coord[:, 0]
-    y = coord[:, 1]
+    x = _c[:, 0]
+    y = _c[:, 1]
 
     rx = x*cos(a1)*cos(a2) + y*(cos(a1)*sin(a2)*sin(a3) - sin(a1)*cos(a3))
     ry = x*sin(a1)*cos(a2) + y*(sin(a1)*sin(a2)*sin(a3) + cos(a1)*cos(a3))
@@ -236,10 +236,10 @@ def skew(coord:COORDINATES, a:float = None, ax:float=None, ay:float=None, **kwar
     if ay == None:
         return skewX(coord, ax)
     
-    coord = to_ndarray(coord)
+    _c = to_ndarray(coord)
     
-    x = coord[:, 0]
-    y = coord[:, 1]
+    x = _c[:, 0]
+    y = _c[:, 1]
 
     rx = x + y*tan(ax)
     ry = x*tan(ay) + y
@@ -256,10 +256,10 @@ def skewX(coord:COORDINATES, a:float = None, **kwargs) -> np.ndarray:
     """
     a = assignArg("skewX", [a], ['angle'], kwargs)
 
-    coord = to_ndarray(coord)
+    _c = to_ndarray(coord)
     
-    x = coord[:, 0]
-    y = coord[:, 1]
+    x = _c[:, 0]
+    y = _c[:, 1]
 
     rx = x + y*tan(a)
 
@@ -275,10 +275,10 @@ def skewY(coord:COORDINATES, a:float = None, **kwargs) -> np.ndarray:
     """
     a = assignArg("skewY", [a], ['angle'], kwargs)
 
-    coord = to_ndarray(coord)
+    _c = to_ndarray(coord)
     
-    x = coord[:, 0]
-    y = coord[:, 1]
+    x = _c[:, 0]
+    y = _c[:, 1]
 
     ry = x*tan(a) + y
 
@@ -368,11 +368,11 @@ def flip(coord:COORDINATES, p:Tuple[float, float]) -> np.ndarray:
         coord (COORDINATES): a matrix of 2D coordinates
         p (tuple): a point along which to flip over
     """
-    coord = to_ndarray(coord)
-    coord[:, 0] = 2*p[0] - coord[:, 0]
-    coord[:, 1] = 2*p[1] - coord[:, 1]
+    res = to_ndarray(coord)
+    res[:, 0] = 2*p[0] - res[:, 0]
+    res[:, 1] = 2*p[1] - res[:, 1]
 
-    return coord
+    return res
 
 def flipX(coord:COORDINATES) -> np.ndarray:
     """
@@ -381,10 +381,10 @@ def flipX(coord:COORDINATES) -> np.ndarray:
     Args:
         coord (COORDINATES): a matrix of 2D coordinates
     """
-    coord = to_ndarray(coord)
-    coord[:, 1] *= -1
+    res = to_ndarray(coord)
+    res[:, 1] *= -1
 
-    return coord
+    return res
 
 def flipY(coord:COORDINATES) -> np.ndarray:
     """
@@ -393,10 +393,10 @@ def flipY(coord:COORDINATES) -> np.ndarray:
     Args:
         coord (COORDINATES): a matrix of 2D coordinates
     """
-    coord = to_ndarray(coord)
-    coord[:, 0] *= -1
+    res = to_ndarray(coord)
+    res[:, 0] *= -1
     
-    return coord
+    return res
 
 def flipXY(coord:COORDINATES) -> np.ndarray:
     """
@@ -405,11 +405,11 @@ def flipXY(coord:COORDINATES) -> np.ndarray:
     Args:
         coord (COORDINATES): a matrix of 2D coordinates
     """
-    coord = to_ndarray(coord)
-    coord[:, 0] *= -1
-    coord[:, 1] *= -1
+    res = to_ndarray(coord)
+    res[:, 0] *= -1
+    res[:, 1] *= -1
     
-    return coord
+    return res
 
 def flipDiagonal(coord:COORDINATES) -> np.ndarray:
     """
@@ -418,12 +418,12 @@ def flipDiagonal(coord:COORDINATES) -> np.ndarray:
     Args:
         coord (COORDINATES): a matrix of 2D coordinates
     """
-    coord = to_ndarray(coord)
-    temp = coord[:, 0].copy()
-    coord[:, 0] = coord[:, 1].copy()
-    coord[:, 1] = temp
+    res = to_ndarray(coord)
+    temp = res[:, 0].copy()
+    res[:, 0] = res[:, 1].copy()
+    res[:, 1] = temp
     
-    return coord
+    return res
 
 def dot(coord:COORDINATES, m:np.ndarray) -> np.ndarray:
     """
@@ -436,14 +436,12 @@ def dot(coord:COORDINATES, m:np.ndarray) -> np.ndarray:
     if m.shape != (2, 2):
         raise ValueError("[ERROR] dot: you should give (x, y) position/positions")
 
-    coord = to_ndarray(coord)
+    _c = to_ndarray(coord)
 
-    return coord @ m
+    return _c @ m
 
-# TBD
-"""
-def distort(coord:COORDINATES, method='barrel', rate:Union[float, List[float]] = -1.0, **kwargs):
-    
+def distort(coord:COORDINATES, method='barrel', rate:float = 0.5):
+    """
     Distorts a point set using various distorting methods.
 
     Args:
@@ -451,40 +449,84 @@ def distort(coord:COORDINATES, method='barrel', rate:Union[float, List[float]] =
         method (string): it can be either `barrel` or `pincushion`.
             - barrel: magnification decreases with distance from the optical axis.
             - pincushion: magnification increases with the distance from the optical axis.
-        rate | k (float | list) : list of distortion coefficients
-
-    k = assignArg("distort", [rate], ['k'], kwargs)
+        rate (float) : distortion coefficients
+    """
 
     if method not in ['barrel', 'pincushion']:
         raise ValueError("[Error] distort: `method` argument should be either `barrel` or `pincushion`")
 
-    if _isNumber(k):
-        if method == 'barrel' and k > 0:
-            k *= -1
-            
-        if method == 'pinchushion' and k < 0:
-            k *= -1
-            
-        k = [k]
-
-    if method == 'barrel' and k[0] > 0:
-        warnings.warn("distort: barrel distortion typically has a negative distortion coefficient")
-
-    if method == 'pincushion' and k[0] < 0:
-        warnings.warn("distort: pincushion distortion typically has a positive distortion coefficient")
+    if method == 'pincushion' and rate >= 1:
+        raise ValueError("[Error] distort: pincushion distortion coefficients should be larger than `1`")
     
-    coord = to_ndarray(coord)
-    x = coord[:, 0]
-    y = coord[:, 1]
+    if method == 'pincushion':
+        rate *= -1
+    
+    _c = to_ndarray(coord)
+    x = _c[:, 0]
+    y = _c[:, 1]
 
     cx, cy = np.mean(x), np.mean(y)
+    
     r = np.sqrt(np.power(x-cx, 2) + np.power(y-cy, 2))
     R = np.max(r)
+    r = r/R
 
-    d = 1 + np.sum([k[i]*np.power(r, 2*(i+1)) for i in range(len(k))], axis = 0)
+    d = np.sqrt(1 + rate*np.power(r, 2))
     
-    rx = x + (x-cx)/d
-    ry = y = (y-cy)/d
+    rx = cx + (x-cx)/d
+    ry = cy + (y-cy)/d
 
     return np.stack((rx, ry), axis=1)
-"""
+
+def focus(coord:COORDINATES, p:Tuple[float, float], rate:float = 0.5):
+    """
+    Pull the coordinates into a given pivot point
+
+    Args:
+        coord (COORDINATES): a matrix of 2D coordinates
+        p (float, float): (x, y) positions of pivot point
+        rate (float) : distortion factor to apply
+    """
+    
+    _c = to_ndarray(coord)
+    x = _c[:, 0]
+    y = _c[:, 1]
+
+    cx, cy = p
+    
+    r = np.sqrt(np.power(x-cx, 2) + np.power(y-cy, 2))
+    R = np.max(r)
+    r = r/R
+
+    d = np.sqrt(1 + rate*np.power(r, 2))
+    
+    rx = cx + (x-cx)/d
+    ry = cy + (y-cy)/d
+
+    return np.stack((rx, ry), axis=1)
+
+def shatter(coord:COORDINATES, p:Tuple[float, float], rate:float = 0.5):
+    """
+    Repel the coordinates away from a given pivot point
+
+    Args:
+        coord (COORDINATES): a matrix of 2D coordinates
+        p (float, float): (x, y) positions of pivot point
+        rate (float) : distortion factor to apply
+    """
+    _c = to_ndarray(coord)
+    x = _c[:, 0]
+    y = _c[:, 1]
+    
+    cx, cy = p
+    
+    r = np.sqrt(np.power(x-cx, 2) + np.power(y-cy, 2))
+    R = np.max(r)
+    r = (R-r)/R
+
+    d = np.sqrt(1 + rate*np.power(r, 2))
+    
+    rx = -cx + (x+cx)/d
+    ry = -cy + (y+cy)/d
+
+    return np.stack((rx, ry), axis=1)
