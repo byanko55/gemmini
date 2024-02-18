@@ -1,6 +1,7 @@
 from gemmini.misc import *
 from gemmini.plot import *
 from gemmini.d2.polygon2D import *
+from gemmini.d2.point2D import Pointcloud2D
 
 if __name__ == "__main__":
     f = Polygon2D([[0,0], [3,0], [3,3], [2,1]])
@@ -57,4 +58,8 @@ if __name__ == "__main__":
 
     f = ConcaveStar(s=25, nD=7, nV=5)
     print("Figure: ConcaveStar")
+    plot(f)
+    
+    f = RegularPolygon(6, 10, nV=6)
+    print("Figure: RegularPolygon with interior")
     plot(f)

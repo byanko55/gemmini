@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.path as pth
 
 import warnings
-from math import sqrt, cos, sin, tan, pi, log10
+from math import sqrt, cos, sin, tan, pi, inf, log10
 from typing import Callable, Any, List, Optional, Tuple, Union
 
 COORDINATES = Union[Tuple, List, np.ndarray]

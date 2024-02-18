@@ -1,6 +1,6 @@
 
 from gemmini.misc import *
-from gemmini.calc.coords import dist
+from gemmini.calc.coords import dist, interior_pixels
 from gemmini.d2.transform2D import *
 
 import copy
@@ -25,7 +25,10 @@ class Geometry2D:
 
         self.gem_type = gem_type
         self._op_queue = list()
-        self._coords = self._base_coords()
+        self._exterior = self._base_coords()
+        self._interior = None
+        self._density = None
+        self._fill = False
 
     def _base_coords(self) -> np.ndarray:
         """
@@ -37,18 +40,26 @@ class Geometry2D:
         """
         Returns a list of (x, y) coordinates for the pixels
         """
-        # Do transfrom operations at once, and save the intermediate results to `_coords`
+        update_interior = len(self._op_queue) > 0 or type(self._interior) == type(None)
+        
+        # Do transfrom operations at once, and save the intermediate results to `_exterior`
         while self._op_queue:
             args = self._op_queue.pop()
             
             if type(args) == tuple:
                 op = args[0]
-                self._coords = op(self._coords, *args[1:])
+                self._exterior = op(self._exterior, *args[1:])
             else :
                 op = args
-                self._coords = op(self._coords)
+                self._exterior = op(self._exterior)
         
-        return self._coords
+        if not self._fill:
+            return self._exterior
+        
+        if update_interior:
+            self._interior = interior_pixels(self._exterior, self._density)
+            
+        return np.concatenate((self._exterior, self._interior), axis=0)
 
     def coordsXY(self) -> np.ndarray:
         """
@@ -62,7 +73,6 @@ class Geometry2D:
         """
         Return a copy of the given geometric object.
         """
-        
         gem = copy.deepcopy(self)
         return gem
 
@@ -101,6 +111,16 @@ class Geometry2D:
 
         return dist((mx, my), (Mx, My))/2
     
+    def fill(self, density:int = 16) -> None:
+        """
+        Draw interior pixels of geometric object
+        
+        Args:
+            density (int): A higher value will result in more pixels.
+        """
+        self._fill = True
+        self._density = density
+    
     def scale(self, sx:float, sy:float = None) -> None:
         """
         Resizes the figure on 2D plane.
@@ -109,7 +129,6 @@ class Geometry2D:
             sx (float): the scaling factor to apply on the x-coordinate
             sy (float): the scaling factor to apply on the y-coordinate
         """
-        
         self._op_queue.append((scale, sx, sy))
         
     def scaleX(self, s:float = None, **kwargs) -> None:
