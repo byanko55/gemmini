@@ -155,7 +155,7 @@ class RegularPolygon(Geometry2D):
         super().__init__(gem_type=gem_type, **kwargs)
 
     def _base_coords(self) -> np.ndarray:
-        coord = np.array([[self._draw_edge(i, self.nD-j-1) for j in range(self.nD-1)] for i in range(self.nV)])
+        coord = np.array([[self._draw_edge(i, self.nD-j-1) for j in reversed(range(self.nD-1))] for i in range(self.nV)])
         coord = coord.reshape(-1, coord.shape[-1])
 
         return coord
@@ -546,7 +546,6 @@ class ConcaveStar(Geometry2D):
     def _base_coords(self) -> np.ndarray:
         ang = pi/self.nV
         orD = self.uS * sin(ang) / (cos(2*ang)*cos(ang) + sin(2*ang)*sin(ang))
-        irD = self.uS / (cos(ang) + sin(ang)*tan(2*ang))
 
         coord = self._draw_substar(orD)
 
