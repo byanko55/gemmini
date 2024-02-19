@@ -16,3 +16,6 @@ if __name__ == "__main__":
     plot(pc)
 
     print("2~5th dots: ", pc[1:4])
+
+    g = Grid(5, 4, num_dot=(10, 8))
+    plot(g)
