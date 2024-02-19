@@ -13,9 +13,8 @@ if __name__ == "__main__":
     print("centroid: ", pc.center())
     print("width x height:", pc.dim())
     print("radius: ", pc.rad())
-    plot(pc)
-
     print("2~5th dots: ", pc[1:4])
+    plot(pc)
 
     g = Grid(5, 4, num_dot=(10, 8))
     plot(g)

@@ -2,37 +2,6 @@ from gemmini.misc import *
 from gemmini.calc.coords import _isNumber
 from gemmini.d2._gem2D import *
 
-class Point2D(Geometry2D):
-    def __init__(
-        self, 
-        px:float, 
-        py:float, 
-        **kwargs
-    ) -> None:
-        """
-        A single pixel
-
-        Args:
-            px (float): x-coordinate
-            py (float): y-coordinate
-        """
-
-        gem_type = self.__class__.__name__
-
-        self.px = px
-        self.py = py
-        
-        super().__init__(gem_type=gem_type, **kwargs)
-        
-    def fill(self) -> None:
-        warnings.warn("[WARN] Drawing interior pixels is not available for this geometry class")
-
-    def _base_coords(self) -> np.ndarray:
-        return np.array([[self.px, self.py]])
-
-    def __len__(self) -> int:
-        return 1
-    
 
 class Pointcloud2D(Geometry2D):
     def __init__(
@@ -46,8 +15,11 @@ class Pointcloud2D(Geometry2D):
         Args:
             points (list): set of cartesian coordinates (x, y)
         """
+        gem_type = 'Pointcloud'
 
-        gem_type = self.__class__.__name__
+        if 'gem_type' in kwargs:
+            gem_type = kwargs['gem_type']
+            del kwargs['gem_type']
 
         self.points = np.array(points)
         
@@ -57,6 +29,10 @@ class Pointcloud2D(Geometry2D):
             "%(gem_type))
         
         super().__init__(gem_type=gem_type, **kwargs)
+
+    def area(self) -> float:
+        warnings.warn("[WARN] Computing area is not available for this geometry class")
+        return 0
         
     def fill(self) -> None:
         warnings.warn("[WARN] Drawing interior pixels is not available for this geometry class")
@@ -66,9 +42,28 @@ class Pointcloud2D(Geometry2D):
 
     def __len__(self) -> int:
         return len(self.points)
-    
 
-class Grid(Geometry2D):
+
+class Point2D(Pointcloud2D):
+    def __init__(
+        self, 
+        px:float, 
+        py:float, 
+        **kwargs
+    ) -> None:
+        """
+        A single pixel
+
+        Args:
+            px (float): x-coordinate
+            py (float): y-coordinate
+        """
+        gem_type = self.__class__.__name__
+
+        super().__init__(points=[[px, py]], gem_type=gem_type, **kwargs)
+
+
+class Grid(Pointcloud2D):
     def __init__(
         self,
         h:float = None,
@@ -87,7 +82,6 @@ class Grid(Geometry2D):
                 Or, you can determine the number of dots in each sides differently by giving a tuple for the `num_dot` argument. 
                 ex) num_dot = (2,4): grid with 2 rows and 4 columns
         """
-
         gem_type = self.__class__.__name__
 
         self.h, self.w, nD = assignArg(
@@ -104,21 +98,13 @@ class Grid(Geometry2D):
 
         if self.nr < 2 or self.nc < 2 :
             raise ValueError("[ERROR] %s: each row/column should consist of at least 2 dots"%(gem_type))
-
-        super().__init__(gem_type=gem_type, **kwargs)
-
-    def fill(self) -> None:
-        warnings.warn("[WARN] Drawing interior pixels is not available for this geometry class")
-
-    def _base_coords(self) -> np.ndarray:
+        
         x, y = np.meshgrid(
             np.linspace(-self.w/2, self.w/2, self.nc), 
             np.linspace(-self.h/2, self.h/2, self.nr)
         )
 
         x, y = x.flatten(), y.flatten()
+        points = np.vstack((x, y)).T
 
-        return np.vstack((x, y)).T
-
-    def __len__(self) -> int:
-        return self.nr * self.nc
+        super().__init__(points=points, gem_type=gem_type, **kwargs)
