@@ -1,48 +1,51 @@
 from gemmini.misc import *
 from gemmini.plot import *
+from gemmini.canvas import Canvas
 from gemmini.d2.line2D import Line2D
+from gemmini.d2.polygon2D import RegularPolygon
 
-import unittest
+if __name__ == '__main__': 
+    canva = Canvas()
+    a = Line2D((1,0), slope=1.5)
+    assert a.grad() == 1.5
 
-class SelfTests(unittest.TestCase): 
-    def line1(self):
-        l = Line2D((1,0), slope=1.5)
-        self.assertTrue(l.grad() == 1.5)
-        plot(l)
+    b = Line2D((-1,0), (0,2))
+    assert b.grad() == 2
 
-    def line2(self):
-        l = Line2D((1,0), (2,2))
-        self.assertTrue(l.grad() == 2)
-        plot(l)
+    aa = Line2D((3, 3), slope=1.5)
+    c = Line2D((0, 0), slope=1.5)
+    d = Line2D((0, 0), (-2, 1))
 
-    def line_invalid1(self):
-        with self.assertRaises(ValueError):
-            l = Line2D((1,0), (2,2), slope=1.5)
+    assert a == aa
+    assert a != b
+    assert a.parallel(c)
+    assert not a.parallel(b)
+    assert b.orthog(d)
 
-    def line_invalid2(self):
-        with self.assertRaises(ValueError):
-            l = Line2D((1,0), 4)
+    x, y = b.intersect(d)
+    assert (abs(x - (-0.8)) <= 1e-6 and abs(y-0.4) <= 1e-6)
+    x, y = a & d
+    assert (abs(x - 3/4) <= 1e-6 and abs(y - (-3/8)) <= 1e-6)
 
-    def line_invalid3(self):
-        with self.assertRaises(ValueError):
-            l = Line2D((1,0), slope='1.5')
+    canva.add(a)
+    canva.add(b)
+    canva.add(c)
+    canva.add(d)
+    canva.plot()
 
-    def two_lines(self):
-        a = Line2D((0, 0), slope=2)
-        b = Line2D((0, 1), slope=2)
-        c = Line2D((0, 0), slope=-1/2)
-        d = Line2D((2, 2), (2, -2))
-        e = Line2D((3, 0), (-3, 0))
+    canva = Canvas()
 
-        self.assertTrue(a.parallel(b))
-        self.assertFalse(a.parallel(c))
-        self.assertTrue(a.orthog(c))
-        self.assertTrue(d.orthog(e))
+    ga = RegularPolygon(s=10, nD=6, nV=6)
+    gb = RegularPolygon(s=10, nD=6, nV=4)
+    gb.translate(-8, 4)
 
-        x, y = d.intersect(e)
-        self.assertTrue(x == 2 and y == 0)
-        x, y = d & e
-        self.assertTrue(x == 2 and y == 0)
+    assert len(c.intersect(ga)) == 2
+    assert len(c.intersect(gb)) == 0
 
-if __name__ == '__main__':  
-    unittest.main()
+    assert c.on(ga) == True
+    assert c.on(gb) == False
+
+    canva.add(c)
+    canva.add(ga)
+    canva.add(gb)
+    canva.plot()
