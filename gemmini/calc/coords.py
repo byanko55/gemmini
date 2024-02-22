@@ -1,5 +1,7 @@
 from gemmini.misc import *
 
+from scipy.spatial import Delaunay
+
 def to_ndarray(coord:COORDINATES) -> np.ndarray:
     """
     Return the coordinate lists as a numpy array with dimension: (N, 2).
@@ -49,13 +51,24 @@ def mesh_dist(a:np.ndarray, b:np.ndarray) -> np.ndarray:
         res (np.ndarray): pairs of distance
             res[i][j] = Euclidean distance between the `i`-th point of `a` and `j`-th point of `b`.
     """
-    res = np.zeros((len(a), len(b)))
+    if not _isPointSet(a) or not _isPointSet(b):
+        raise ValueError("[Error] mesh_dist: the dimension of input arrays should be (N, 2)")
     
-    for i, aa in enumerate(a):
-        for j, bb in enumerate(b):
-            res[i][j] = np.linalg.norm(aa-bb)
-            
-    return res
+    return np.sqrt(((a[:, None] - b[:, :, None]) ** 2).sum(0))
+
+def outer_product(p:Tuple[float, float], q:Tuple[float, float], r:Tuple[float, float] = None) -> float:
+    """
+    Compute the outer product of given vectors
+
+    Args:
+        p, q, (tuple): (x, y) coordinates of each point
+        r (tuple, Optional): if `r` is not None, then calculate the outer product of two vectors: `p -> q` and `p -> r`.
+    """
+    
+    if type(r) == type(None):
+        return p[0]*q[1] - q[0]*p[1]
+
+    return (q[0] - p[0])*(r[1] - p[1]) - (r[0] - p[0])*(q[1] - p[1])
 
 def polar_pixels(r:Union[float, np.ndarray], theta:Union[float, np.ndarray]) -> np.ndarray:
     """
@@ -79,6 +92,103 @@ def polar_pixels(r:Union[float, np.ndarray], theta:Union[float, np.ndarray]) -> 
         ")
     
     return coord
+
+def concave_hull(coord:COORDINATES, alpha:float = 0.9) -> np.ndarray:
+    """
+    Compute the concave hull of a set of points.
+    See reference: https://gist.github.com/jclosure/d93f39a6c7b1f24f8b92252800182889
+
+    Args:
+        coord (tuple | list | np.ndarray): Iterable container of points.
+        alpha (float): alpha value to influence the gooeyness of the border. 
+            Smaller numbers don't fall inward as much as larger numbers. 
+            Too large, and you lose everything!
+    """
+    if len(coord) < 4:
+        # When you have a triangle, there is no sense in computing an alpha shape
+        return coord
+    
+    Q = []
+    opp = {}
+    neighbors = [[] for _ in range(len(coord))]
+    
+    xs, ys, xS, yS = bounding_box(coord)
+    scale = dist((xs, ys), (xS, yS))/2
+    
+    tri = Delaunay(coord)
+
+    def find_opp(opp, i, j, k):
+        if (i, j) in opp :
+            opp[(i, j)].append(k)
+            return
+        
+        opp[(i, j)] = [k]
+        neighbors[i].append(j)
+        neighbors[j].append(i)
+
+    for i, j, k in tri.simplices:
+        i, j, k = sorted([i, j, k])
+        pa = coord[i]
+        pb = coord[j]
+        pc = coord[k]
+
+        # Lengths of sides of triangle
+        a = dist(pa, pb)
+        b = dist(pb, pc)
+        c = dist(pa, pc)
+
+        # Semiperimeter of triangle
+        s = (a + b + c)/2.0
+
+        # Area of triangle by Heron's formula
+        area = sqrt(s*(s-a)*(s-b)*(s-c))
+        r = a*b*c/(4.0*area)
+
+        # Here's the radius filter.
+        if r < scale*1.0/alpha:
+            find_opp(opp, i, j, k)
+            find_opp(opp, j, k, i)
+            find_opp(opp, i, k, j)
+
+    for k,v in opp.items():
+        if len(v) == 1:
+            Q.append(k)
+
+    ER = set()
+    
+    while Q:
+        i, j = Q.pop()
+
+        k = opp[(i, j)][0]
+
+        erasable = True
+
+        for nb in neighbors[k]:
+            _i, _j = min(nb, k), max(nb, k)
+
+            if len(opp[(_i, _j)]) == 1:
+                erasable = False
+                break
+
+        if not erasable:
+            continue
+
+        ER.add((i, j))
+
+        _i, _k = min(i, k), max(i, k)
+        opp[(_i, _k)].remove(j)
+        Q.append((_i, _k))
+
+        _j, _k = min(j, k), max(j, k)
+        opp[(_j, _k)].remove(i)
+        Q.append((_j, _k))
+
+    exterior = []
+    for k,v in opp.items():
+        if len(v) == 1 and k not in ER:
+            exterior.append(k)
+
+    return np.array(exterior)
 
 def bounding_box(coord:COORDINATES) -> Tuple[float, float, float, float]:
     """
@@ -119,6 +229,7 @@ def interior_pixels(coord:COORDINATES, density:int = 16) -> np.ndarray:
         np.linspace(lb, rb, int((rb-lb)*density/min(rb-lb, tb-bb))), 
         np.linspace(bb, tb, int((tb-bb)*density/min(rb-lb, tb-bb)))
     )
+    
     x, y = x.flatten(), y.flatten()
     points = np.vstack((x, y)).T
     
@@ -172,7 +283,7 @@ def _isPoint(p:Any, dim:int = None) -> bool:
         return False
     
     if len(p) < 2 or len(p) > 3:
-        warnings.warn("We do not support dimensions except 2d or 3d")
+        warnings.warn("[WARN] We do not support dimensions except 2d or 3d")
         return False
     
     if dim != None and len(p) != dim:
@@ -193,7 +304,8 @@ def _isPointSet(p:Any, dim:int = None) -> bool:
     if dim != None and len(p[0]) != dim:
         return False
     
-    if isinstance(p, np.ndarray) and (p.shape[1] < 2 or p.shape[1] > 3):
-        return False
+    if isinstance(p, np.ndarray) :
+        if len(p.shape) != 2 or (p.shape[1] < 2 or p.shape[1] > 3):
+            return False
     
     return True
