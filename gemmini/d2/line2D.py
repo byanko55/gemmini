@@ -238,7 +238,6 @@ class Segment(Geometry2D):
             slope (float): slope or gradient of a line
             p1, p2 (float, float): End-points of the line segment.
         """
-
         gem_type = self.__class__.__name__
 
         self.nD, arg1, arg2 = assignArg(
@@ -291,3 +290,9 @@ class Segment(Geometry2D):
 
     def __len__(self) -> int:
         return self.nD
+    
+    def __hash__(self) -> int:
+        if self.line_type == 0:
+            return super().__hash__() + hash((self.nD, self.aG))
+        else :
+            return super().__hash__() + hash((self.p1, self.p2))

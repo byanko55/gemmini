@@ -1,51 +1,109 @@
 from gemmini.misc import *
-from gemmini.plot import *
 from gemmini.canvas import Canvas
-from gemmini.d2.line2D import Line2D
+from gemmini.d2.line2D import *
 from gemmini.d2.polygon2D import RegularPolygon
 
-if __name__ == '__main__': 
-    canva = Canvas()
+import pytest
+
+def test_line2D_1():
     a = Line2D((1,0), slope=1.5)
     assert a.grad() == 1.5
 
     b = Line2D((-1,0), (0,2))
     assert b.grad() == 2
 
-    aa = Line2D((3, 3), slope=1.5)
-    c = Line2D((0, 0), slope=1.5)
-    d = Line2D((0, 0), (-2, 1))
+def test_line2D_2():
+    a = Line2D((1,0), slope=1.5)
+    b = Line2D((3, 3), slope=1.5)
+    c = Line2D((-1,0), (0,2))
+    d = Line2D((0, 0), slope=1.5)
+    e = Line2D((0, 0), (-2, 1))
 
-    assert a == aa
-    assert a != b
-    assert a.parallel(c)
-    assert not a.parallel(b)
-    assert b.orthog(d)
+    assert a == b
+    assert a != c
+    assert a.parallel(d)
+    assert not a.parallel(c)
+    assert c.orthog(e)
 
-    x, y = b.intersect(d)
+def test_line2D_3():
+    canva = Canvas()
+
+    a = Line2D((1,0), slope=1.5)
+    b = Line2D((-1,0), (0,2))
+    c = Line2D((0, 0), (-2, 1))
+
+    x, y = b.intersect(c)
     assert (abs(x - (-0.8)) <= 1e-6 and abs(y-0.4) <= 1e-6)
-    x, y = a & d
+    x, y = a & c
     assert (abs(x - 3/4) <= 1e-6 and abs(y - (-3/8)) <= 1e-6)
 
     canva.add(a)
     canva.add(b)
     canva.add(c)
-    canva.add(d)
     canva.plot()
 
+def test_segment():
     canva = Canvas()
+
+    a = Segment(6, p1=(8,8), p2=(10,10))
+    b = Segment(6, size=10, slope=pi/3)
+
+    canva.add(a)
+    canva.add(b)
+    canva.plot()
+
+    with pytest.raises(ValueError):
+        a = Segment(5, p1=(7, 5), slope=pi/4)
+
+    with pytest.raises(ValueError):
+        a = Segment(5, size=10, p2=(10,10))
+
+    with pytest.raises(ValueError):
+        a = Segment(5, p1=(7, 5), p2=[[10]])
+
+def test_line_with_point():
+    a = Line2D((0, 0), slope=1.5)
+
+    assert a.on((2, 3)) == True
+    assert a.on((3, 2)) == False
+
+def test_line_with_gem():
+    canva = Canvas()
+    a = Line2D((0, 0), slope=1.5)
 
     ga = RegularPolygon(s=10, nD=6, nV=6)
     gb = RegularPolygon(s=10, nD=6, nV=4)
     gb.translate(-8, 4)
 
-    assert len(c.intersect(ga)) == 2
-    assert len(c.intersect(gb)) == 0
+    assert len(a.intersect(ga)) == 2
+    assert len(a.intersect(gb)) == 0
 
-    assert c.on(ga) == True
-    assert c.on(gb) == False
+    assert a.on(ga) == True
+    assert a.on(gb) == False
 
-    canva.add(c)
+    canva.add(a)
     canva.add(ga)
     canva.add(gb)
     canva.plot()
+
+def test_line_with_segment():
+    canva = Canvas()
+    a = Line2D((1, 0), slope=1/2)
+    sa = Segment(10, p1=(0,3), p2=(3,2))
+    sb = Segment(10, size=5, slope=pi/4)
+
+    assert a.on(sa) == False
+    assert a.on(sb) == True
+
+    canva.add(a)
+    canva.add(sa)
+    canva.add(sb)
+    canva.plot()
+
+if __name__ == '__main__': 
+    test_line2D_1()
+    test_line2D_2()
+    test_line2D_3()
+    test_line_with_gem()
+    test_segment()
+    test_line_with_segment()
