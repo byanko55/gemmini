@@ -1,208 +1,147 @@
 from gemmini.misc import *
 
-from scipy.spatial import Delaunay
+import matplotlib.path as pth
 
-def to_ndarray(coord:COORDINATES) -> np.ndarray:
+
+def to_ndarray(xy:COORDINATES) -> np.ndarray:
     """
-    Return the coordinate lists as a numpy array with dimension: (N, 2).
+    Return the coordinate lists as a numpy array with dimension: (N, 2)
     
     Args:
-        coord (tuple | list | np.ndarray): a series of (x, y) coordinates
+        xy (tuple | list | np.ndarray): a series of (x, y) coordinates
     """
-    res = np.copy(coord)
+    res = np.copy(xy)
     
-    if _isNumber(res[0]):
+    if isNumber(res[0]):
         if len(res) != 2:
-            raise ValueError("[ERROR] to_ndarray: you should give (x, y) position/positions")
+            raise ValueError(" \
+                [ERROR] to_ndarray: Given matrix is not convertible to a numpy array with shape (N, 2) \
+            ")
         
         return res.reshape(-1, 2)
     
-    if not _isPoint(res[0], dim=2):
-        raise ValueError("[ERROR] to_ndarray: you should give (x, y) position/positions")
+    if not isPoint(res[0], dim=2):
+        raise ValueError(" \
+            [ERROR] to_ndarray: Given matrix is not convertible to a numpy array with shape (N, 2) \
+        ")
     
     return res
 
+
 def dist(p:Tuple[Any, ...], q:Tuple[Any, ...]) -> float:
     """
-    Returns the Euclidean distance between two points (p and q), where p and q are the coordinates of that point.
+    Returns the Euclidean distance between two points
 
     Args:
-        p, q (Tuple[Any, ...]): the coordinates of that point.
+        p, q (tuple): the coordinates of that point.
 
     Returns:
         A float value, representing the Euclidean distance between p and q
     """
-    if not (_isPoint(p) and _isPoint(q)):
+    if not (isPoint(p) and isPoint(q)):
         raise ValueError(" \
-            [ERROR] dist: require (x, y) coordinates of two points \
+            [ERROR] dist: Tried to give input that can't be represented as a cartesian point \
         ")
     
     return np.linalg.norm(np.array(p) - np.array(q))
 
+
 def mesh_dist(a:np.ndarray, b:np.ndarray) -> np.ndarray:
     """
-    Return 2D matrix where each element represents the Euclidean distance,
-    between two points chosen from two different coordinate lists, respectively.
+    Calculate pairwise distances between two different sets of points
      
     Args:
         a, b (np.ndarray): two coordinate lists
 
     Returns:
         res (np.ndarray): pairs of distance
-            res[i][j] = Euclidean distance between the `i`-th point of `a` and `j`-th point of `b`.
+            res[i][j] = Euclidean distance between the `i`-th point of `a` and `j`-th point of `b`
     """
-    if not _isPointSet(a) or not _isPointSet(b):
-        raise ValueError("[Error] mesh_dist: the dimension of input arrays should be (N, 2)")
+    if not isPointSet(a) or not isPointSet(b):
+        raise ValueError(" \
+            [Error] mesh_dist: The dimension of input arrays should be (N, 2) \
+        ")
     
     return np.sqrt(((a[:, None] - b[:, :, None]) ** 2).sum(0))
+
 
 def outer_product(p:Tuple[float, float], q:Tuple[float, float], r:Tuple[float, float] = None) -> float:
     """
     Compute the outer product of given vectors
 
     Args:
-        p, q, (tuple): (x, y) coordinates of each point
-        r (tuple, Optional): if `r` is not None, then calculate the outer product of two vectors: `p -> q` and `p -> r`.
+        p, q (tuple): two cartesian coordinates
+        r (tuple, Optional): If a 3rd coordinates `r` is provided, 
+            then it will return the outer product of two vectors: `p -> q` and `p -> r`
     """
-    
     if type(r) == type(None):
         return p[0]*q[1] - q[0]*p[1]
 
     return (q[0] - p[0])*(r[1] - p[1]) - (r[0] - p[0])*(q[1] - p[1])
 
-def polar_pixels(r:Union[float, np.ndarray], theta:Union[float, np.ndarray]) -> np.ndarray:
+
+def to_cartesian(r:Union[float, np.ndarray], theta:Union[float, np.ndarray]) -> np.ndarray:
     """
-    Transforms polar coordinates (r, θ) into cartesian coordinates (x, y).
+    Transforms polar coordinates (r, θ) into cartesian coordinates (x, y)
     
     Args:
         r (float | np.ndarray): radius
         theta (float | np.ndarray): angle (in radian)
 
     Returns:
-        coord (np.ndarray): coordinates on cartesian system.
+        xy (np.ndarray): coordinates on cartesian system
     """
     
-    if _isNumber(theta):
-        coord = np.array([[r*cos(theta), r*sin(theta)]])
-    elif _isNumberArray(theta) :
-        coord = np.stack((r*np.cos(theta), r*np.sin(theta)), axis=1)
+    if isNumber(theta):
+        xy = np.array([[r*cos(theta), r*sin(theta)]])
+    elif isNumberArray(theta) :
+        xy = np.stack((r*np.cos(theta), r*np.sin(theta)), axis=1)
     else :
         raise ValueError(" \
-            [ERROR] polar_pixels: radius/theta should be a floating value or list of numbers, \
+            [ERROR] to_cartesian: Both `radius` and `theta` should be a floating value \
+            or list of numbers \
         ")
     
-    return coord
+    return xy
 
-def concave_hull(coord:COORDINATES, alpha:float = 0.9) -> np.ndarray:
+
+def centroid(xy:COORDINATES) -> Tuple[float, float]:
     """
-    Compute the concave hull of a set of points.
-    See reference: https://gist.github.com/jclosure/d93f39a6c7b1f24f8b92252800182889
+    Returns The centroid of a given points
 
     Args:
-        coord (tuple | list | np.ndarray): Iterable container of points.
-        alpha (float): alpha value to influence the gooeyness of the border. 
-            Smaller numbers don't fall inward as much as larger numbers. 
-            Too large, and you lose everything!
+        xy (tuple | list | np.ndarray): a series of (x, y) coordinates
     """
-    if len(coord) < 4:
-        # When you have a triangle, there is no sense in computing an alpha shape
-        return coord
+    if not isPointSet(xy):
+        raise ValueError(" \
+            [Error] centroid: Input array should be 2D or 3D point sets \
+        ")
     
-    Q = []
-    opp = {}
-    neighbors = [[] for _ in range(len(coord))]
+    _xm = np.mean([p[0] for p in xy])
+    _ym = np.mean([p[1] for p in xy])
     
-    xs, ys, xS, yS = bounding_box(coord)
-    scale = dist((xs, ys), (xS, yS))/2
-    
-    tri = Delaunay(coord)
+    return _xm, _ym    
 
-    def find_opp(opp, i, j, k):
-        if (i, j) in opp :
-            opp[(i, j)].append(k)
-            return
-        
-        opp[(i, j)] = [k]
-        neighbors[i].append(j)
-        neighbors[j].append(i)
 
-    for i, j, k in tri.simplices:
-        i, j, k = sorted([i, j, k])
-        pa = coord[i]
-        pb = coord[j]
-        pc = coord[k]
-
-        # Lengths of sides of triangle
-        a = dist(pa, pb)
-        b = dist(pb, pc)
-        c = dist(pa, pc)
-
-        # Semiperimeter of triangle
-        s = (a + b + c)/2.0
-
-        # Area of triangle by Heron's formula
-        area = sqrt(s*(s-a)*(s-b)*(s-c))
-        r = a*b*c/(4.0*area)
-
-        # Here's the radius filter.
-        if r < scale*1.0/alpha:
-            find_opp(opp, i, j, k)
-            find_opp(opp, j, k, i)
-            find_opp(opp, i, k, j)
-
-    for k,v in opp.items():
-        if len(v) == 1:
-            Q.append(k)
-
-    ER = set()
-    
-    while Q:
-        i, j = Q.pop()
-
-        k = opp[(i, j)][0]
-
-        erasable = True
-
-        for nb in neighbors[k]:
-            _i, _j = min(nb, k), max(nb, k)
-
-            if len(opp[(_i, _j)]) == 1:
-                erasable = False
-                break
-
-        if not erasable:
-            continue
-
-        ER.add((i, j))
-
-        _i, _k = min(i, k), max(i, k)
-        opp[(_i, _k)].remove(j)
-        Q.append((_i, _k))
-
-        _j, _k = min(j, k), max(j, k)
-        opp[(_j, _k)].remove(i)
-        Q.append((_j, _k))
-
-    exterior = []
-    for k,v in opp.items():
-        if len(v) == 1 and k not in ER:
-            exterior.append(k)
-
-    return np.array(exterior)
-
-def bounding_box(coord:COORDINATES) -> Tuple[float, float, float, float]:
+def bounding_box(xy:COORDINATES) -> Tuple[float, float, float, float]:
     """
-    border's coordinates on the X and Y axes that enclose a geometric object
+    Border's coordinates on the X and Y axes that enclose a geometric object
+    
+    Args:
+        xy (tuple | list | np.ndarray): a series of (x, y) coordinates
 
     Returns:
         (x_min, y_min, x_max, y_max): the minimum/maximum position of x, y axes
     """
-    if not _isPointSet(coord):
-        raise ValueError("[Error] bounding_box: input array is not a form of 2D/3D cooridinate matrix")
+    if not isPointSet(xy):
+        raise ValueError(" \
+            [Error] bounding_box: Input array should be 2D or 3D point sets \
+        ")
     
-    if isinstance(coord, list):
+    if isinstance(xy, list):
         lb, bb, rb, tb = inf, inf, -inf, -inf
-        for p in coord:
+        
+        for p in xy:
             lb = min(lb, p[0])
             bb = min(bb, p[1])
             rb = max(rb, p[0])
@@ -210,19 +149,20 @@ def bounding_box(coord:COORDINATES) -> Tuple[float, float, float, float]:
             
         return lb, bb, rb, tb
     else :
-        xs, ys = coord[:, 0], coord[:, 1]
+        xs, ys = xy[:, 0], xy[:, 1]
 
         return min(xs), min(ys), max(xs), max(ys)
 
-def interior_pixels(coord:COORDINATES, density:int = 16) -> np.ndarray:
+
+def interior_pixels(xy:COORDINATES, density:float = 16) -> np.ndarray:
     """
-    Get pixels inside of the border of geometric object
+    Get a grid of pixels located inside of the geometric object
     
     Args:
-        coord (COORDINATES): a matrix of 2D coordinates
-        density (int): density of points inside a result geometry
+        xy (COORDINATES): a matrix of 2D coordinates
+        density (float): dot density of a result geometry
     """
-    border = to_ndarray(coord)
+    border = to_ndarray(xy)
     lb, bb, rb, tb = bounding_box(border)
     
     x, y = np.meshgrid(
@@ -236,21 +176,22 @@ def interior_pixels(coord:COORDINATES, density:int = 16) -> np.ndarray:
     p = pth.Path(border)
     grid = p.contains_points(points)
     idxs = np.where(grid == True)
-    inner_coord = points[idxs]
+    inner_xy = points[idxs]
     
-    res = np.concatenate((inner_coord, border), axis=0)
+    res = np.concatenate((inner_xy, border), axis=0)
     
     return res
 
-def rotate_2D(xy:Union[Tuple, List, np.ndarray], theta:float) -> Union[Tuple, np.ndarray]:
+
+def rotate_2D(xy:COORDINATES, theta:float) -> COORDINATES:
     """
     Rotate points in the xy plane anti-clockwise through an angle `theta`
 
     Args:
-        xy (tuple | np.ndarray): collection of coordinates on 2D space.
+        xy (tuple | np.ndarray): collection of coordinates on 2D space
         theta (float): rotation angle (in radian)
     """
-    if _isPoint(xy):
+    if isPoint(xy):
         x, y = xy
         xx = x * cos(theta) - y * sin(theta)
         yy = x * sin(theta) + y * cos(theta)
@@ -265,47 +206,3 @@ def rotate_2D(xy:Union[Tuple, List, np.ndarray], theta:float) -> Union[Tuple, np
     m = np.dot(xy, r)
 
     return m
-
-def _isNumber(n:Any) -> bool:
-    return isinstance(n, (int, float, np.number))
-
-def _isNumberArray(a:Any) -> bool:
-    if isinstance(a, np.ndarray) and len(a.shape) == 1 and _isNumber(a[0]):
-        return True
-    
-    if isinstance(a, list) and not isinstance(a[0], list) and _isNumber(a[0]):
-        return True
-    
-    return False
-
-def _isPoint(p:Any, dim:int = None) -> bool:
-    if not isinstance(p, (tuple, list, np.ndarray)):
-        return False
-    
-    if len(p) < 2 or len(p) > 3:
-        warnings.warn("[WARN] We do not support dimensions except 2d or 3d")
-        return False
-    
-    if dim != None and len(p) != dim:
-        return False
-    
-    return all(_isNumber(i) for i in p)
-
-def _isPointSet(p:Any, dim:int = None) -> bool:
-    if not isinstance(p, (list, np.ndarray)):
-        return False
-    
-    if isinstance(p, list) and not isinstance(p[0], list):
-        return False
-    
-    if isinstance(p[0], list) and (len(p[0]) < 2 or len(p[0]) > 3):
-        return False
-    
-    if dim != None and len(p[0]) != dim:
-        return False
-    
-    if isinstance(p, np.ndarray) :
-        if len(p.shape) != 2 or (p.shape[1] < 2 or p.shape[1] > 3):
-            return False
-    
-    return True
