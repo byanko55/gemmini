@@ -104,7 +104,13 @@ def inspect_args(func, aliases, error_tag, *args, **kwargs):
 
     arg_names = spec.args[1:] if spec.args[0] == 'self' else spec.args
 
-    for i, v in enumerate(spec.defaults):
+    defaults = [None]*len(arg_names)
+
+    if type(spec.defaults) != type(None):
+        for i, v in enumerate(spec.defaults):
+            defaults[i + len(arg_names) - len(spec.defaults)] = v
+
+    for i, v in enumerate(defaults):
         arg = arg_names[i]
 
         if arg in kwargs:
@@ -136,7 +142,7 @@ def alias(aliases):
     return decorator
 
 
-def geminit(aliases):
+def geminit(aliases={}):
     def decorator(init):
         def func_wrapper(self, *args, **kwargs):
             gem_type = self.__class__.__name__
