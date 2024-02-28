@@ -1,60 +1,89 @@
 from gemmini.misc import *
-from gemmini.plot import *
 from gemmini.d2.polar2D import *
+from gemmini.canvas import Canvas
+
+import pytest
+
+def test_circle():
+    fa = Circle(r=5)
+    fb = Arc(r=4, angle=3*pi/4, n=16)
+    fc = Ellipse(4, 8, 48)
+
+    fa.translate(0, -10)
+    fb.translate(5, 5)
+    fc.translate(-5, 5)
+
+    canva = Canvas()
+    canva.add((fa, fb, fc))
+    canva.plot()
+
+def test_spiral_1():
+    fa = Spiral(10, 6*pi, 150)
+    fb = ParabolicSpiral(10, 8*pi, 99)
+    fc = ParabolicSpiral(10, 8*pi, 100)
+    fd = LituusSpiral(10, 5*pi, 150)
+
+    canva = Canvas()
+    canva.add(fa)
+
+    for i, f in enumerate([fb, fc, fd]):
+        f.translate(25*cos(i*2*pi/3), 25*sin(i*2*pi/3))
+        canva.add(f)
+
+    canva.plot()
+
+def test_spiral_2():
+    fa = HyperbolicSpiral(10, 3*pi, 20)
+    fb = LogarithmicSpiral(10, 3*pi, 20)
+
+    fa.translateX(5)
+
+    canva = Canvas()
+    canva.add((fa, fb))
+    canva.plot()  
+
+def test_spiral_3():
+    f = BoundedSpiral(10, 8*pi, 256)
+
+    canva = Canvas()
+    canva.add(f)
+    canva.plot()
+
+def test_cycloid_1():
+    f = Cycloid(5, 6*pi, n=128)
+
+    canva = Canvas()
+    canva.add(f)
+    canva.plot()
+
+def test_cycloid_2():
+    fa = Epicycloid(p=5, q=3, size=16)
+    fb = Epicycloid(p=2, q=1, size=16)
+    fc = Hypocycloid(p=5, q=3, size=16)
+    fd = Hypocycloid(p=7, q=4, size=16)
+
+    canva = Canvas()
+
+    for i, f in enumerate([fa, fb, fc, fd]):
+        f.translate(12*cos(i*pi/2), 12*sin(i*pi/2))
+        canva.add(f)
+
+    canva.plot()
+
+def test_others():
+    fa = CurvedPolygon(size=10, num_vertex=5)
+    fb = Lissajous(a=3, b=2, size=10)
+
+    canva = Canvas()
+    fb.translateY(12)
+    canva.add((fa, fb))
+    canva.plot()
 
 if __name__ == "__main__":
-    f = Circle(r=3, nD=64)
-    print("Figure: Circle")
-    plot(f)
-    
-    f = Arc(r=4, nD=36, angle=135)
-    print("Figure: Arc")
-    plot(f)
-
-    f = Ellipse(4, 8, 48)
-    print("Figure: Ellipse")
-    plot(f)
-
-    f = Spiral(9, 100, 6*pi)
-    print("Figure: Spiral")
-    plot(f)
-
-    f = HyperbolicSpiral(10, 100, 5*pi)
-    print("Figure: HyperbolicSpiral")
-    plot(f)
-
-    f = ParabolicSpiral(10, 99, 8*pi)
-    print("Figure: ParabolicSpiral", len(f))
-    plot(f)
-
-    f = ParabolicSpiral(10, 100, 8*pi)
-    print("Figure: ParabolicSpiral", len(f))
-    plot(f)
-
-    f = LituusSpiral(8, 150, 5*pi)
-    print("Figure: LituusSpiral")
-    plot(f)
-
-    f = LogarithmicSpiral(22, 100, 5*pi)
-    print("Figure: LogarithmicSpiral")
-    plot(f)
-
-    f = Cycloid(5, 40, 6*pi)
-    print("Figure: Cycloid")
-    plot(f)
-
-    f = Epicycloid(p=5, q=3, radius=30, nD=300)
-    print("Figure: Epicycloid")
-    plot(f)
-
-    f = Hypocycloid(p=5, q=3, radius=20, nD=300)
-    print("Figure: Hypocycloid")
-    plot(f)
-
-    f = CurvedPolygon(size=15, nD=100, nV=5)
-    print("Figure: CurvedPolygon")
-    plot(f)
-
-    f = Lissajous(a=3, b=2, radius=10, nD=300)
-    print("Figure: Lissajous")
-    plot(f)
+    test_circle()
+    test_spiral_1()
+    test_spiral_2()
+    test_spiral_3()
+    test_cycloid_1()
+    test_cycloid_2()
+    test_others()

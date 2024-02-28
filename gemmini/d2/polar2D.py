@@ -1,252 +1,302 @@
 from gemmini.misc import *
-from gemmini.d2._gem2D import *
-from gemmini.calc.coords import polar_pixels
+from gemmini.d2._gem2D import Geometry2D
+from gemmini.calc.coords import to_cartesian
 
-class Circle(Geometry2D):
+
+class Curve2D(Geometry2D):
     def __init__(
         self,
         r:float = None,
-        nD:int = None,
+        points:Union[list, np.ndarray] = None,
+        **kwargs
+    ) -> None:
+        """
+        Parent class fot the figures that can be represented as polar coordinates
+
+        Args:
+            r (float): radius of the geometry
+            points (list | np.ndarray): set of points on the curve
+        """
+        if not hasattr(self, 'gem_type'):
+            self.gem_type = 'Curve2D'
+        
+        self.rD = r
+        self.v = points
+
+        if self.rD <= 0:
+            raise ValueError(" \
+                [Error] %s: Got a non-positive value for the `radius` \
+                "%(self.gem_type)
+            )
+        
+        super().__init__( 
+            **kwargs
+        )
+
+    def rad(self) -> float:
+        return self.rD
+    
+    def _base_coords(self) -> np.ndarray:
+        return self.v
+    
+    def __len__(self) -> int:
+        raise len(self.v)
+    
+    def __hash__(self) -> int:
+        return super().__hash__()
+
+
+class Circle(Curve2D):
+    @geminit({'radius':'r', 'num_dot':'n'})
+    def __init__(
+        self,
+        r:float = None,
+        n:int = 32,
         **kwargs
     ):
         """
-        A circle
+        A round plane figure whose boundary consists of points equidistant from a fixed point
 
         Args:
-            r | radius (float): radius of a circle
-            nD | num_dot (int): number of dots consisting of the border of a circle
+            r | radius (float): radius of the circle
+            n | num_dot (int): number of dots consisting of the border of the circle
         """
+        self.rD, self.nD = r, n
 
-        gem_type = self.__class__.__name__
-        
-        self.rD, self.nD = assignArg(
-            gem_type, 
-            [r, nD], 
-            ['radius', 'num_dot'], 
-            kwargs
-        )
-
-        super().__init__(gem_type=gem_type, polar=True, **kwargs)
-        
-    def _base_coords(self) -> np.ndarray:
         theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
         rad = self.rD*np.ones_like(theta)
 
-        coord = polar_pixels(rad, theta)
+        coord = to_cartesian(rad, theta)
 
-        return coord
-
-    def __len__(self) -> int:
-        return self.nD
+        super().__init__(
+            r=self.rD,
+            points=coord,
+            planar=True,
+            **kwargs
+        )
     
-class Arc(Geometry2D):
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.rD, self.nD))
+    
+    
+class Arc(Curve2D):
+    @geminit({'radius':'r', 'angle':'a', 'num_dot':'n'})
     def __init__(
         self,
         r:float = None,
-        nD:int = None,
-        a:float = None, 
+        a:float = pi/2,
+        n:int = 32,
         **kwargs
     ):
         """
-        A segment of a differentiable curve
+        A portion of a circumference (perimeter of a circle)
 
         Args:
-            r | radius (float): radius of an arc
-            nD | num_dot (int): number of dots consisting of an arc
-            a | angle (float): interior angle (unit: degrees, °) of an arc
+            r | radius (float): radius of the arc
+            a | angle (float): central angle (unit: radian) of the arc
+            n | num_dot (int): number of dots consisting of the arc
         """
+        self.rD, self.aG, self.nD = r, a, n
 
-        gem_type = self.__class__.__name__
-        
-        self.rD, self.nD, self.aG = assignArg(
-            gem_type, 
-            [r, nD, a], 
-            ['radius', 'num_dot', 'angle'], 
-            kwargs
-        )
+        if self.aG <= 0 or self.aG > 2*pi:
+            raise ValueError(" \
+                [Error] Arc: The argument `angle` must be in range (0, 2π] \
+            ")
 
-        super().__init__(gem_type=gem_type, polar=True, **kwargs)
-
-    def _base_coords(self) -> np.ndarray:
-        theta = np.linspace(0, min(360, self.aG)*np.pi/180, self.nD)
+        theta = np.linspace(0, self.aG, self.nD)
         rad = self.rD*np.ones_like(theta)
 
-        coord = polar_pixels(rad, theta)
+        coord = to_cartesian(rad, theta)
 
-        return coord
+        super().__init__(
+            r=self.rD,
+            points=coord,
+            planar=False,
+            **kwargs
+        )
 
-    def __len__(self) -> int:
-        return self.nD
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.rD, self.nD, self.aG))
+
     
-class Ellipse(Geometry2D):
+class Ellipse(Curve2D):
+    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
         h:float = None,
         w:float = None,
-        nD:int = None,
+        n:int = 32,
         **kwargs
     ):
         """
-        Ellipse is a plane curve surrounding two focal points, such that for all points on the curve, 
-        the sum of the two distances to the focal points is a constant.
+        A plane curve surrounding two focal points such that for all points on the curve, 
+        the sum of the two distances to the focal points is a constant
 
         Args:
             h | height (float): length of minor axis
             w | width (float): length of major axis
-            nD | num_dot (int): number of dots consisting of the border of a ellipse
+            n | num_dot (int): number of dots consisting of the border of the ellipse
         """
+        self.rH, self.rW, self.nD = h, w, n
 
-        gem_type = self.__class__.__name__
+        if h <= 0 or w <= 0 :
+            raise(" \
+                [Error] Ellipse: The length of axes should be longer than 0 \
+            ")
 
-        self.rH, self.rW, self.nD = assignArg(
-            gem_type, 
-            [h, w, nD], 
-            ['height', 'width', 'num_dot'], 
-            kwargs
+        theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
+        coord = np.stack((self.rW*np.cos(theta), self.rH*np.sin(theta)), axis=1)/2
+
+        super().__init__(
+            r=max(self.rH, self.rW)/2,
+            points = coord,
+            planar=True,
+            **kwargs
         )
 
-        super().__init__(gem_type=gem_type, polar=True, **kwargs)
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.rH, self.rW, self.nD))
 
-    def _base_coords(self) -> np.ndarray:
-        theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
-        coord = np.stack((self.rW*np.cos(theta), -self.rH*np.sin(theta)), axis=1)/2
-        
-        return coord
 
-    def __len__(self) -> int:
-        return self.nD
-    
-class Spiral(Geometry2D):
+class Spiral(Curve2D):
+    @geminit({'radius':'r', 'angle':'a', 'num_dot':'n'})
     def __init__(
         self,
         r:float = None,
-        nD:int = None,
-        a:float = None,
+        a:float = 2*pi,
+        n:int = 32,
         **kwargs
     ):
         """
-        A curve on a plane that winds around a fixed center point 
-        at a continuously increasing or decreasing distance from the point.
+        A curve on a plane that winds around a fixed center point at a continuously 
+        increasing or decreasing distance from the point
 
         Args:
             r | radius (float): radius of the spiral
-            nD | num_dot (int): number of dots consisting of the curve
-            a | angle (float): interior angle (unit: radian)
+            a | angle (float): determines the range of theta in polar equation (r, θ) of
+                the spiral (0 ≤ θ ≤ `a`, unit: radian)
+            n | num_dot (int): number of dots consisting of the spiral
         """
-        
-        gem_type = self.__class__.__name__
+        self.rD, self.aG, self.nD = r, a, n
 
-        self.rD, self.nD, self.aG = assignArg(
-            gem_type, 
-            [r, nD, a], 
-            ['radius', 'num_dot', 'angle'], 
-            kwargs
-        )
+        if self.aG <= 0:
+            raise ValueError(" \
+                [Error] Spiral: Tried to assign non-positive value to the argument `angle` \
+            ")
 
         self.draw_func = None
 
         if 'draw_func' in kwargs:
             self.draw_func = kwargs['draw_func']
 
-        super().__init__(gem_type=gem_type, polar=True, **kwargs)
-
-    def _base_coords(self) -> np.ndarray:
         theta = np.linspace(0, self.aG, self.nD+1)[1:]
 
         if self.draw_func == None:
             rad = self.rD*theta/self.aG
-            coord = polar_pixels(rad, theta)
-            
-            return coord
+            coord = to_cartesian(rad, theta)
         else :
-            return self.draw_func(self.rD, theta)
+            coord = self.draw_func(self.rD, theta)
 
-    def __len__(self) -> int:
-        return self.nD
+        super().__init__(
+            r=self.rD,
+            points=coord,
+            planar=False,
+            **kwargs
+        )
+        
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.rD, self.nD, self.aG))
+
     
 def HyperbolicSpiral(
     r:float = None,
-    nD:int = None,
-    a:float = None,
+    a:float = 2*pi,
+    n:int = 32,
     **kwargs
 ):
     """
-    A type of spiral with a pitch angle that increases with distance from its center.
+    A type of spiral with a pitch angle that increases with distance from its center
 
     Args:
         r | radius (float): radius of the spiral
-        nD | num_dot (int): number of dots consisting of the curve
-        a | angle (float): interior angle (unit: radian)
+        a | angle (float): determines the range of theta in polar equation (r, θ) of
+            the spiral (0 ≤ θ ≤ `a`, unit: radian)
+        n | num_dot (int): number of dots consisting of the spiral
     """
     def _draw_curve(radius, theta):
         rad = radius * theta[0]/theta
-        coord = polar_pixels(rad, theta)
+        coord = to_cartesian(rad, theta)
 
         return coord
 
-    return Spiral(r, nD, a, draw_func=_draw_curve, **kwargs)
+    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
+
 
 def ParabolicSpiral(
     r:float = None,
-    nD:int = None,
-    a:float = None,
+    a:float = 2*pi,
+    n:int = 32,
     **kwargs
 ):
     """
-    A plane curve with the property that the area 
-    between any two consecutive full turns around the spiral is invariant.
+    A plane curve with the property that the area between any two consecutive full turns
+    around the spiral is invariant
 
     Args:
         r | radius (float): radius of the spiral
-        nD | num_dot (int): number of dots consisting of the curve
-        a | angle (float): interior angle (unit: radian)
+        a | angle (float): determines the range of theta in polar equation (r, θ) of
+            the spiral (0 ≤ θ ≤ `a`, unit: radian)
+        n | num_dot (int): number of dots consisting of the spiral
     """
     def _draw_curve(radius, theta):
         log_theta = np.sqrt(theta)
         rad = radius * log_theta/log_theta[-1]
 
         if len(log_theta)%2 == 0 :
-            coord_pos = polar_pixels(rad[::2], theta[::2])
-            coord_neg = polar_pixels(-rad[::2], theta[::2])
+            coord_pos = to_cartesian(rad[::2], theta[::2])
+            coord_neg = to_cartesian(-rad[::2], theta[::2])
         else :
-            coord_pos = polar_pixels(rad[1::2], theta[1::2])
-            coord_neg = polar_pixels(-rad[::2], theta[::2])
+            coord_pos = to_cartesian(rad[1::2], theta[1::2])
+            coord_neg = to_cartesian(-rad[::2], theta[::2])
 
         coord = np.concatenate((np.flip(coord_pos, axis=0), coord_neg), axis=0)
 
         return coord
 
-    return Spiral(r, nD, a, draw_func=_draw_curve, **kwargs)
+    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
+
 
 def LituusSpiral(
     r:float = None,
-    nD:int = None,
-    a:float = None,
+    a:float = 2*pi,
+    n:int = 32,
     **kwargs
 ):
     """
-    lituus spiral is a spiral in which the angle θ is 
-    inversely proportional to the square of the radius r.
+    lituus spiral is a spiral in which the angle θ is inversely proportional to 
+    the square of the radius r
 
     Args:
         r | radius (float): radius of the spiral
-        nD | num_dot (int): number of dots consisting of the curve
-        a | angle (float): interior angle (unit: radian)
+        a | angle (float): determines the range of theta in polar equation (r, θ) of
+            the spiral (0 ≤ θ ≤ `a`, unit: radian)
+        n | num_dot (int): number of dots consisting of the spiral
     """
     def _draw_curve(radius, theta):
         log_theta = np.power(theta, -1/2)
-        rad = radius * log_theta[0]/log_theta
+        rad = radius * log_theta[-1]/log_theta
 
-        coord = polar_pixels(rad, theta)
+        coord = to_cartesian(rad, theta)
 
         return coord
 
-    return Spiral(r, nD, a, draw_func=_draw_curve, **kwargs)
+    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
+
 
 def LogarithmicSpiral(
     r:float = None,
-    nD:int = None,
-    a:float = None,
+    a:float = 2*pi,
+    n:int = 32,
     **kwargs
 ):
     """
@@ -254,48 +304,66 @@ def LogarithmicSpiral(
 
     Args:
         r | radius (float): radius of the spiral
-        nD | num_dot (int): number of dots consisting of the curve
-        a | angle (float): interior angle (unit: degrees, °)
+        a | angle (float): determines the range of theta in polar equation (r, θ) of
+            the spiral (0 ≤ θ ≤ `a`, unit: radian)
+        n | num_dot (int): number of dots consisting of the spiral
     """
     def _draw_curve(radius, theta):
         exp_theta = np.exp(theta)
         rad = radius * exp_theta/exp_theta[-1]
 
-        coord = polar_pixels(rad, theta)
+        coord = to_cartesian(rad, theta)
 
         return coord
 
-    return Spiral(r, nD, a, draw_func=_draw_curve, **kwargs)
+    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
 
-class Cycloid(Geometry2D):
+
+def BoundedSpiral(
+    r:float = None,
+    a:float = 2*pi,
+    n:int = 32,
+    **kwargs
+):
+    """
+    A spiral bounded in a circle with radius `r`
+
+    Args:
+        r | radius (float): radius of the spiral
+        a | angle (float): determines the range of theta in polar equation (r, θ) of
+            the spiral (0 ≤ θ ≤ `a`, unit: radian)
+        n | num_dot (int): number of dots consisting of the spiral
+    """
+    def _draw_curve(radius, theta):
+        arc_theta = np.arctan(theta/(2*pi))
+        rad = radius * arc_theta/np.max(arc_theta)
+
+        coord = to_cartesian(rad, theta)
+
+        return coord
+
+    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
+
+
+class Cycloid(Curve2D):
+    @geminit({'radius':'r', 'angle':'a', 'num_dot':'n'})
     def __init__(
         self,
         r:float = None,
-        nD:int = None,
-        a:float = None,
+        a:float = 2*pi,
+        n:int = 32,
         **kwargs
     ):
         """
         Curve traced by a point on a circle as it rolls along a straight line without slipping
         
         Args:
-            r | radius (float): radius of the spiral
-            nD | num_dot (int): number of dots consisting of the curve
-            a | angle (float): interior angle (unit: degrees, °)
+            r | radius (float): radius of the circle rolling over the x-axis
+            a | angle (float): angle through which the rolling circle has rotated (unit: radian)
+            n | num_dot (int): number of dots on the trail
         """
-        
-        gem_type = self.__class__.__name__
+        self.rD, self.aG, self.nD = r, a, n
 
-        self.rD, self.nD, self.aG = assignArg(
-            gem_type, 
-            [r, nD, a], 
-            ['radius', 'num_dot', 'angle'], 
-            kwargs
-        )
-
-        super().__init__(gem_type=gem_type, polar=True, **kwargs)
-
-    def _base_coords(self) -> np.ndarray:
         theta = np.linspace(0, self.aG, self.nD)
         dx = self.rD*(theta - np.sin(theta))
         dy = self.rD*(1 - np.cos(theta))
@@ -303,133 +371,145 @@ class Cycloid(Geometry2D):
         coord = np.stack((dx, dy), axis=1)/np.max(theta)
         coord[:, 0] -= self.rD/2
 
-        return coord
+        super().__init__(
+            r=self.rD,
+            points=coord,
+            planar=True,
+            **kwargs
+        )
+        
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.rD, self.nD, self.aG))
 
-    def __len__(self) -> int:
-        return self.nD
     
-class Epicycloid(Geometry2D):
+class Epicycloid(Curve2D):
+    @geminit({'size':'s', 'num_dot':'n'})
     def __init__(
         self,
         p:int, 
         q:int,
-        r:float = None,
-        nD:int = None,
+        s:float = None,
+        n:int = 256,
         **kwargs
     ):
         """
-        A plane curve produced by tracing the path of a chosen point 
-        on the circumference of a circle called an epicycle 
-        which rolls without slipping around a fixed circle.
+        A plane curve produced by tracing the path of a chosen point on the circumference of 
+        a circle called an epicycle which rolls without slipping around a fixed circle
         
         Args:
-            p, q (int) : determines the shape of the epicycloid.
+            p, q (int) : determines the shape of the epicycloid
                 number of cusps can be represented as: k = p/q 
-            r | radius (float): radius of the cycloid
-            nD | num_dot (int): number of dots consisting of the curve
+            s | size (float): height/width of the geometry
+            n | num_dot (int): number of dots on the trail
         """
-        gem_type = self.__class__.__name__
+        self.p, self.q, self.uS, self.nD = p, q, s, n
 
-        self.p = p
-        self.q = q
+        if p <= 0 or q <= 0 or type(p) != int or type(q) != int:
+            raise ValueError(" \
+                [Error] Epicycloid: Both `p` and `q` must be positive integers \
+            ")
 
-        self.rD, self.nD = assignArg(
-            gem_type, 
-            [r, nD], 
-            ['radius', 'num_dot'], 
-            kwargs
-        )
-
-        super().__init__(gem_type=gem_type, polar=True, **kwargs)
-
-    def _base_coords(self) -> np.ndarray:
         k = self.p/self.q
         theta = np.linspace(0, self.q*2*np.pi, self.nD+1)[:-1]
 
-        dx = self.rD*((k+1)*np.cos(theta) - np.cos((k+1)*theta))
-        dy = self.rD*((k+1)*np.sin(theta) - np.sin((k+1)*theta))
+        dx = (k+1)*np.cos(theta) - np.cos((k+1)*theta)
+        dy = (k+1)*np.sin(theta) - np.sin((k+1)*theta)
         coord = np.stack((dx, dy), axis=1)
+        coord = self.uS/2 * coord / np.max(coord)
 
-        return coord
+        super().__init__(
+            r=self.uS/2,
+            points=coord,
+            planar=True,
+            **kwargs
+        )
 
-    def __len__(self) -> int:
-        return self.nD
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.p, self.q, self.uS, self.nD))
     
-class Hypocycloid(Geometry2D):
+
+class Hypocycloid(Curve2D):
+    @geminit({'size':'s', 'num_dot':'n'})
     def __init__(
         self,
         p:int, 
         q:int,
-        r:float = None,
-        nD:int = None,
+        s:float = None,
+        n:int = 256,
         **kwargs
     ):
         """
-        A special plane curve generated by the trace of a fixed point 
-        on a small circle that rolls within a larger circle.
+        A special plane curve generated by the trace of a fixed point on a small circle
+        that rolls within a larger circle
         
         Args:
-            p, q (int) : determines the shape of the hypocycloid.
+            p, q (int) : determines the shape of the hypocycloid
                 number of cusps can be represented as: k = p/q 
-            r | radius (float): radius of the cycloid
-            nD | num_dot (int): number of dots consisting of the curve
+            s | size (float): height/width of the geometry
+            nD | num_dot (int): number of dots on the trail
         """
-        gem_type = self.__class__.__name__
+        self.p, self.q, self.uS, self.nD = p, q, s, n
 
-        self.p = p
-        self.q = q
-
-        self.rD, self.nD = assignArg(
-            gem_type, 
-            [r, nD], 
-            ['radius', 'num_dot'], 
-            kwargs
-        )
-
-        super().__init__(gem_type=gem_type, polar=True, **kwargs)
-
-    def _base_coords(self) -> np.ndarray:
+        if p <= 0 or q <= 0 or type(p) != int or type(q) != int:
+            raise ValueError(" \
+                [Error] Hypocycloid: Both `p` and `q` must be positive integers \
+            ")
+        
         k = self.p/self.q
         theta = np.linspace(0, self.q*2*np.pi, self.nD+1)[:-1]
 
-        dx = self.rD*((k-1)*np.cos(theta) + np.cos((k-1)*theta))
-        dy = self.rD*((k-1)*np.sin(theta) - np.sin((k-1)*theta))
+        dx = (k-1)*np.cos(theta) + np.cos((k-1)*theta)
+        dy = (k-1)*np.sin(theta) - np.sin((k-1)*theta)
         coord = np.stack((dx, dy), axis=1)
+        coord = self.uS/2 * coord / np.max(coord)
 
-        return coord
+        super().__init__(
+            r=self.uS/2,
+            points=coord,
+            planar=True,
+            **kwargs
+        )
+        
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.p, self.q, self.uS, self.nD))
 
-    def __len__(self) -> int:
-        return self.nD
 
+@alias({'size':'s', 'num_vertex':'v', 'num_dot':'n'})
 def CurvedPolygon(
     s:float = None,
-    nD:int = None,
-    nV:int = None,
+    v:int = None,
+    n:int = 128,
     **kwargs
 ):
     """
-    A polygon whose angles are all equal, and all sides have the same length.
+    A curve alike regular polygon, but has rounded edges curved toward its center
 
     Args:
-        s | size (float): distance between centroid and sharp corner
-        nD | num_dot (int): number of dots consisting of the whole curve
-        nV | num_vertex (int): number of corners
+        s | size (float): height/width of the geometry
+        v | num_vertex (int): number of corners
+        n | num_dot (int): number of dots consisting of the whole curve
     """
+    if v < 3 :
+        raise ValueError(" \
+            [ERROR] CurvedPolygon: To draw the geometry, at least 3 corners are required \
+        ")
+    
+    if s <= 0 :
+        raise ValueError(" \
+            [ERROR] CurvedPolygon: The size of the geometry must be greater than 0 \
+        ")
 
-    s, nV = assignArg('CurvedPolygon', [s, nV], ['size', 'num_vertex'], kwargs)
+    return Hypocycloid(v, 1, s, n, **kwargs)
 
-    if nV < 3 :
-        raise ValueError("[ERROR] CurvedPolygon should have at least 3 corners")
 
-    return Hypocycloid(nV, 1, s, nD, **kwargs)
-
-class Lissajous(Geometry2D):
+class Lissajous(Curve2D):
+    @geminit({'size':'s', 'num_dot':'n'})
     def __init__(
         self,
         a:float,
         b:float,
-        r:int = None,
-        nD:int = None,
+        s:int = None,
+        n:int = 128,
         **kwargs
     ):
         """
@@ -437,34 +517,25 @@ class Lissajous(Geometry2D):
         in x and y directions of different angular frequency (a and b)
 
         Args:
-            a, b (int) : frequency
-            r | radius (float): radius of the curve
-            nD | num_dot (int): number of dots consisting of the curve
+            a, b (int) : frequencies of the vertical and horizontal sinusoidal inputs
+            s | size (float): the height/width of the geometry
+            n | num_dot (int): number of dots consisting of the curve
         """
+        self.a, self.b, self.uS, self.nD = a, b, s, n
 
-        gem_type = self.__class__.__name__
-
-        self.a = a
-        self.b = b
-
-        self.rD, self.nD = assignArg(
-            gem_type, 
-            [r, nD], 
-            ['radius', 'num_dot'], 
-            kwargs
-        )
-
-        super().__init__(gem_type=gem_type, polar=True, **kwargs)
-        
-    def _base_coords(self) -> np.ndarray:
         theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
         
-        dx = self.rD*(np.cos(self.a*theta))
-        dy = self.rD*(np.sin(self.b*theta))
+        dx = self.uS*(np.cos(self.a*theta))/2
+        dy = self.uS*(np.sin(self.b*theta))/2
 
         coord = np.stack((dx, dy), axis=1)
-        
-        return coord
 
-    def __len__(self) -> int:
-        return self.nD
+        super().__init__(
+            r=self.uS/2,
+            points=coord,
+            planar=True,
+            **kwargs
+        )
+        
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.a, self.b, self.uS, self.nD))
