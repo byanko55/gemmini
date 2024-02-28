@@ -45,21 +45,23 @@ def test_line2D_3():
 def test_segment():
     canva = Canvas()
 
-    a = Segment(6, p1=(8,8), p2=(10,10))
-    b = Segment(6, size=10, slope=pi/3)
+    a = Segment(p1=(8,8), p2=(10,10), n=6)
+    b = Segment(size=10, slope=pi/3, n=6)
+    c = Segment((5, 5), (5, -5), 9)
 
     canva.add(a)
     canva.add(b)
+    canva.add(c)
     canva.plot()
 
     with pytest.raises(ValueError):
-        a = Segment(5, p1=(7, 5), slope=pi/4)
+        a = Segment(p1=(7, 5), slope=pi/4, n=5)
 
     with pytest.raises(ValueError):
-        a = Segment(5, size=10, p2=(10,10))
+        a = Segment(size=10, p2=(10,10))
 
     with pytest.raises(ValueError):
-        a = Segment(5, p1=(7, 5), p2=[[10]])
+        a = Segment(p1=(7, 5), p2=[[10]])
 
 def test_line_with_point():
     a = Line2D((0, 0), slope=1.5)
@@ -89,8 +91,8 @@ def test_line_with_gem():
 def test_line_with_segment():
     canva = Canvas()
     a = Line2D((1, 0), slope=1/2)
-    sa = Segment(10, p1=(0,3), p2=(3,2))
-    sb = Segment(10, size=5, slope=pi/4)
+    sa = Segment(p1=(0,3), p2=(3,2), n=10)
+    sb = Segment(size=5, slope=pi/4, n=10)
 
     assert a.on(sa) == False
     assert a.on(sb) == True
