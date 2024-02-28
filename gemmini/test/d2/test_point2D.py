@@ -1,12 +1,14 @@
 from gemmini.misc import *
-from gemmini.plot import *
 from gemmini.d2.point2D import *
+from gemmini.canvas import Canvas
 
-if __name__ == "__main__":
-    p = Point2D(3,4)
-    plot(p)
+import pytest
+
+def test_point():
+    canva = Canvas()
+    p = Point2D(7,6)
     
-    points = 10*np.random.rand(10, 2)
+    points = 5*np.random.rand(20, 2)
     pc = Pointcloud2D(points)
 
     print("bounding box: ", pc.bounding_box())
@@ -14,7 +16,18 @@ if __name__ == "__main__":
     print("width x height:", pc.dim())
     print("radius: ", pc.rad())
     print("2~5th dots: ", pc[1:4])
-    plot(pc)
 
+    canva.add(p)
+    canva.add(pc)
+    canva.plot()
+
+def test_grid():
+    canva = Canvas()
     g = Grid(5, 4, num_dot=(10, 8))
-    plot(g)
+    
+    canva.add(g)
+    canva.plot()
+
+if __name__ == "__main__":
+    test_point()
+    test_grid()
