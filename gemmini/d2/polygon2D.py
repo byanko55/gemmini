@@ -2,31 +2,27 @@ from gemmini.misc import *
 from gemmini.d2._gem2D import Geometry2D
 from gemmini.d2.line2D import Segment
 from gemmini.calc.geometry import connect_edges
-from gemmini.calc.coords import _isNumber, _isPoint, rotate_2D
+from gemmini.calc.coords import isNumber, isPoint, rotate_2D
 
 
 class Polygon2D(Geometry2D):
     def __init__(
         self,
-        v:Union[list, np.ndarray] = None,
+        vertices:Union[list, np.ndarray],
         **kwargs
     ) -> None:
         """
         A 2D plane figure made up of line segments connected to form a closed polygonal chain.
 
         Args:
-            vertices (Union[list, np.ndarray]): set of polygon's vertices (or corners).
+            vertices (list | np.ndarray): set of polygon's vertices (or corners).
         """
-        gem_type = 'Polygon2D'
+        if not hasattr(self, 'gem_type'):
+            self.gem_type = 'Polygon2D'
         
-        if 'gem_type' in kwargs:
-            gem_type = kwargs['gem_type']
-            del kwargs['gem_type']
-        
-        self.v = assignArg(gem_type, [v], ['vertices'], kwargs)
+        self.v = vertices
         
         super().__init__(
-            gem_type=gem_type,
             planar=True,
             **kwargs
         )
@@ -41,51 +37,49 @@ class Polygon2D(Geometry2D):
         return super().__hash__()
     
 
-def line_segment2D(p1:Tuple[float, float], p2:Tuple[float, float]):
+def line_segment2D(p1:Tuple[float, float], p2:Tuple[float, float]) -> Polygon2D:
     """
-    A one-dimensional line segment joining two vertices
+    A one-dimensional line segment joining two vertices.
     
     Args:
-        p1, p2 (float, float): coordinates of two vertices
+        p1, p2 (float, float): coordinates of two vertices.
     """
-    if not _isPoint(p1, dim=2) or not _isPoint(p2, dim=2):
+    if not isPoint(p1, dim=2) or not isPoint(p2, dim=2):
         raise ValueError(" \
-            [ERROR] line_segment2D: check every points to conform the 2D format (x, y) \
+            [ERROR] line_segment2D: Input vector does not match the format of 2D point. \
         ")
     
     return Polygon2D(vertices=[p1, p2])
 
 
 class RegularPolygon(Polygon2D):
+    @geminit({'size':'s', 'num_vertex':'v', 'num_dot':'n'})
     def __init__(
         self,
         s:float = None,
-        nD:int = None,
-        nV:int = None,
+        v:int = None,
+        n:int = 8,
         **kwargs
-    ):
+    ) -> None:
         """
         A polygon whose angles are all equal, and all sides have the same length.
 
         Args:
-            s | size (float): length of each side
-            nD | num_dot (int): number of dots consisting of a edge
-            nV | num_vertex (int): number of vertex
+            s | size (float): side length of the polygon.
+            v | num_vertex (int): number of vertex.
+            n | num_dot (int): number of dots consisting of a edge.
         """
-        gem_type = self.__class__.__name__
-
-        self.uS, self.nD, self.nV = assignArg(
-            gem_type, 
-            [s, nD, nV], 
-            ['size', 'num_dot', 'num_vertex'], 
-            kwargs
-        )
+        self.uS, self.nV, self.nD = s, v, n
 
         if self.nV < 3 :
-            raise ValueError("[ERROR] %s should have at least 3 vertices"%(gem_type))
+            raise ValueError(" \
+                [ERROR] RegularPolygon: Requires at least 3 vertices. \
+            ")
 
         if self.nD < 2 :
-            raise ValueError("[ERROR] %s: each side must have at least 2 dots"%(gem_type))
+            raise ValueError(" \
+                [ERROR] RegularPolygon: Each side must have at least 2 dots. \
+            ")
         
         coord = np.array([
             [self._draw_edge(i, self.nD-j-1) for j in reversed(range(self.nD-1))] for i in range(self.nV)
@@ -94,12 +88,11 @@ class RegularPolygon(Polygon2D):
         coord = coord.reshape(-1, coord.shape[-1])
         
         super().__init__(
-            vertices=coord, 
-            gem_type=gem_type, 
+            vertices=coord,
             **kwargs
         )
     
-    def _draw_edge(self, v, e):
+    def _draw_edge(self, v, e) -> Tuple[float, float]:
         dx = -self.uS/2 + self.uS*e/(self.nD-1)
         dy = -self.uS/(2*tan(pi/self.nV))
         
@@ -111,529 +104,657 @@ class RegularPolygon(Polygon2D):
         return self.nV*(self.nD-1)
     
     def __hash__(self) -> int:
-        return super().__hash__() + hash((self.gem_type, self.uS, self.nD, self.nV))
+        return super().__hash__() + hash((self.gem_type, self.uS, self.nV, self.nD))
     
     
 class IsoscelesTriangle(Polygon2D):
+    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
         h:float = None,
         w:float = None,
-        nD:int = None,
+        n:Union[int, Tuple[int, int, int]] = 27,
         **kwargs
-    ):
+    ) -> None:
         """
         A triangle that has two sides of equal length.
 
         Args:
-            h | height (float): height of triangle
-            w | width (float): base length of the triangle
-            nD | num_dot (int): number of dots consisting of a edge
+            h | height (float): height of triangle.
+            w | width (float): base length of the triangle.
+            n | num_dot (int | tuple): number of dots consisting of each edge.
+                If a numeric value is given, then the triangle includes `n` dots on its circumference.
+                Or, you can determine the number of dots on each sides respectively,
+                by giving a tuple for the `num_dot` argument. 
+                ex) num_dot = (8,9,12): #dots on left leg=8, #dots on right leg=9, #dots on base=12
         """
-        gem_type = self.__class__.__name__
-
-        self.h, self.w, self.nD = assignArg(
-            gem_type, 
-            [h, w, nD], 
-            ['height', 'width', 'num_dot'], 
-            kwargs
-        )
+        self.h, self.w, self.nD = h, w, n
+        
+        if isNumber(n):
+            _s = w + 2*sqrt(h**2 + (w/2)**2)
+            _nD = n + 3
+            nD_l = int(_nD * sqrt(h**2 + (w/2)**2)/_s)
+            self.nD = [nD_l, nD_l, _nD - 2*nD_l]
+            
+        if not isNumberArray(self.nD) or len(self.nD) != 3:
+            raise ValueError(" \
+                [ERROR] IsoscelesTriangle: Invalid data type for the argument `num_dot`. \
+                Make sure it is either an integer or a tuple with 3 numeric elements. \
+            ")
+            
+        if min(self.nD) < 2:
+            raise ValueError(" \
+                [ERROR] IsoscelesTriangle: Each side should consist of at least 2 dots. \
+            ")
         
         right = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[1], 
             p1 = (self.w/2, -self.h/3), 
             p2 = (0, 2*self.h/3)
         )
         left = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[0], 
             p1 = (0, 2*self.h/3), 
             p2 = (-self.w/2, -self.h/3),
         )
         base = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[2], 
             p1 = (-self.w/2, -self.h/3), 
             p2 = (self.w/2, -self.h/3)
         )
         
         super().__init__(
-            vertices=connect_edges(right, left, base), 
-            gem_type=gem_type, 
+            vertices=connect_edges(right, left, base),
             **kwargs
         )
         
     def __len__(self) -> int:
-        return 3*(self.nD - 1)
+        return sum(self.nD) - 3
     
     def __hash__(self) -> int:
-        return super().__hash__() + hash((self.gem_type, self.h, self.w, self.nD))
+        return super().__hash__() + hash((self.gem_type, self.h, self.w, tuple(self.nD)))
         
 
 class RightTriangle(Polygon2D):
+    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
         h:float = None,
         w:float = None,
-        nD:int = None,
+        n:Union[int, Tuple[int, int, int]] = 27,
         **kwargs
-    ):
+    ) -> None:
         """
-        A triangle that has one of its interior angles measuring 90°
+        A triangle that has one of its interior angles measuring 90°.
 
         Args:
-            h | height (float): height of triangle
-            w | width (float): base length of the triangle
-            nD | num_dot (int): number of dots consisting of a edge
+            h | height (float): height of triangle.
+            w | width (float): base length of the triangle.
+            n | num_dot (int | tuple): number of dots consisting of each edge.
+                If a numeric value is given, then the triangle includes `n` dots on its circumference.
+                Or, you can determine the number of dots on each sides respectively,
+                by giving a tuple for the `num_dot` argument. 
+                ex) num_dot = (8,9,12): #dots on vertical leg=8, #dots on hypotenuse=9, #dots on base=12
         """
-        gem_type = self.__class__.__name__
-
-        self.h, self.w, self.nD = assignArg(
-            gem_type, 
-            [h, w, nD], 
-            ['height', 'width', 'num_dot'], 
-            kwargs
-        )
+        self.h, self.w, self.nD = h, w, n
+        
+        if isNumber(n):
+            _s = w + h + sqrt(h**2 + w**2)
+            _nD = n + 3
+            nD_v = int(_nD * h/_s)
+            nD_h = int(_nD * w/_s)
+            self.nD = [nD_v, _nD - nD_v - nD_h, nD_h]
+            
+        if not isNumberArray(self.nD) or len(self.nD) != 3:
+            raise(" \
+                [ERROR] RightTriangle: Invalid data type for the argument `num_dot`. \
+                Make sure it is either an integer or a tuple with 3 numeric elements. \
+            ")
+            
+        if min(self.nD) < 2:
+            raise ValueError(" \
+                [ERROR] RightTriangle: Each side should consist of at least 2 dots. \
+            ")
         
         right = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[1], 
             p1 = (2*self.w/3, -self.h/3), 
             p2 = (-self.w/3, 2*self.h/3),
         )
         left = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[0], 
             p1 = (-self.w/3, 2*self.h/3), 
             p2 = (-self.w/3, -self.h/3)
         )
         base = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[2], 
             p1 = (-self.w/3, -self.h/3), 
             p2 = (2*self.w/3, -self.h/3)
         )
         
         super().__init__(
-            vertices=connect_edges(right, left, base), 
-            gem_type=gem_type, 
+            vertices=connect_edges(right, left, base),
             **kwargs
         )
         
     def __len__(self) -> int:
-        return 3*(self.nD - 1)
+        return sum(self.nD) - 3
     
     def __hash__(self) -> int:
-        return super().__hash__() + hash((self.gem_type, self.h, self.w, self.nD))
+        return super().__hash__() + hash((self.gem_type, self.h, self.w, tuple(self.nD)))
 
 
 class Parallelogram(Polygon2D):
+    @geminit({'height':'h', 'width':'w', 'num_dot':'n', 'angle':'a'})
     def __init__(
         self,
         h:float = None,
         w:float = None,
-        nY:int = None,
-        nX:int = None,
-        a:float = None,
+        n:Union[int, Tuple[int, int, int, int]] = 32,
+        a:float = pi/3,
         **kwargs
-    ):
+    ) -> None:
         """
         A quadrilateral which is made up of 2 pairs of parallel sides.
 
         Args:
-            h | height (float): length of vertical edge
-            w | width (float): length of horizontal edge
-            nY | num_ydot (int): number of dots consisting of a vertical edge
-            nX | num_xdot (int): number of dots consisting of a horizontal edge
-            a | angle (float): interior angle (unit: radian)
+            h | height (float): height of the geometry.
+            w | width (float): length of base (horizontal edge).
+            n | num_dot (int | tuple): number of dots consisting of each side.
+                If a numeric value is given, then the geometry includes `n` dots on its circumference.
+                Or, you can determine the number of dots on each sides respectively,
+                by giving a tuple for the `num_dot` argument.
+                ex) num_dot = (7,8,9,10): #dots on top/right/bottom/left side = 7/8/9/10
+            a | angle (float): one of the adjacent angle (unit: radian) of the parallelogram.
         """
-        gem_type = self.__class__.__name__
-
-        self.h, self.w, self.nY, self.nX, self.aG = assignArg(
-            gem_type, 
-            [h, w, nY, nX, a], 
-            ['height', 'width', 'num_ydot', 'num_xdot', 'angle'], 
-            kwargs
-        )
-
-        if self.nX < 2 or self.nY < 2 :
-            raise ValueError("[ERROR] %s: each side should consist of at least 2 dots"%(gem_type))
+        self.h, self.w, self.nD, self.aG = h, w, n, a
+        
+        if self.aG <= 0 or self.aG >= pi:
+            raise ValueError(" \
+                [ERROR] Parallelogram: The argument `angle` must be in range (0, π). \
+            ")
+        
+        if isNumber(n):
+            _s = 2*w + 2*h/sin(a)
+            _nD = n + 4
+            nD_tb = int(_nD * w/_s)
+            nD_lr = int(_nD * (h/sin(a))/_s)
+            self.nD = [nD_tb, nD_lr, nD_tb, _nD - 2*nD_tb - nD_lr]
+            
+        if not isNumberArray(self.nD) or len(self.nD) != 4:
+            raise ValueError(" \
+                [ERROR] Parallelogram: Invalid data type for the argument `num_dot`. \
+                Make sure it is either an integer or a tuple with 4 numeric elements. \
+            ")
+        
+        if min(self.nD) < 2:
+            raise ValueError(" \
+                [ERROR] Parallelogram: Each side should consist of at least 2 dots. \
+            ")
         
         top = Segment(
-            num_dot=self.nX, 
+            num_dot=self.nD[0], 
             p1 = ((-self.w + self.h*cos(self.aG))/2, self.h*sin(self.aG)/2), 
             p2 = ((self.w + self.h*cos(self.aG))/2, self.h*sin(self.aG)/2)
         )
         right = Segment(
-            num_dot=self.nY, 
+            num_dot=self.nD[1],
             p1 = ((self.w + self.h*cos(self.aG))/2, self.h*sin(self.aG)/2), 
             p2 = ((self.w - self.h*cos(self.aG))/2, -self.h*sin(self.aG)/2)
         )
         bottom = Segment(
-            num_dot=self.nX, 
+            num_dot=self.nD[2],
             p1 = ((self.w - self.h*cos(self.aG))/2, -self.h*sin(self.aG)/2), 
             p2 = ((-self.w - self.h*cos(self.aG))/2, -self.h*sin(self.aG)/2)
         )
         left = Segment(
-            num_dot=self.nY, 
+            num_dot=self.nD[3],
             p1 = ((-self.w - self.h*cos(self.aG))/2, -self.h*sin(self.aG)/2), 
             p2 = ((-self.w + self.h*cos(self.aG))/2, self.h*sin(self.aG)/2)
         )
         
         super().__init__(
-            vertices=connect_edges(top, right, bottom, left), 
-            gem_type=gem_type, 
+            vertices=connect_edges(top, right, bottom, left),
             **kwargs
         )
         
     def __len__(self) -> int:
-        return 2*(self.nX + self.nY - 2)
+        return sum(self.nD)-4
     
     def __hash__(self) -> int:
-        return super().__hash__() + hash((self.gem_type, self.h, self.w, self.nY, self.nX, self.aG))
+        return super().__hash__() + hash((self.gem_type, self.h, self.w, tuple(self.nD), self.aG))
     
     
 class Rhombus(Polygon2D):
+    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
         h:float = None,
         w:float = None,
-        nD:int = None,
+        n:Union[int, Tuple[int, int, int, int]] = 32,
         **kwargs
-    ):
+    ) -> None:
         """
         A quadrilateral whose four sides all have the same length.
 
         Args:
-            h | height (float): length of vertical diagonals
-            w | width (float): length of horizontal diagonals
-            nD | num_dot (int): number of dots consisting of a edge
+            h | height (float): length of vertical diagonals.
+            w | width (float): length of horizontal diagonals.
+            n | num_dot (int | tuple): number of dots consisting of each side.
+                If a numeric value is given, then the geometry includes `n` dots on its circumference.
+                Or, you can determine the number of dots on each sides respectively,
+                by giving a tuple for the `num_dot` argument.
+                ex) num_dot = (7,8,9,10): (top_right=7, bottom_right=8, bottom_left=9, top_left=10)
         """
-        gem_type = self.__class__.__name__
+        self.h, self.w, self.nD = h, w, n
 
-        self.h, self.w, self.nD = assignArg(
-            gem_type, 
-            [h, w, nD], 
-            ['height', 'width', 'num_dot'], 
-            kwargs
-        )
-
-        if self.nD < 2 :
-            raise ValueError("[ERROR] %s: each side must have at least 2 dots"%(gem_type))
+        if isNumber(n):
+            _nD = n + 4
+            nD_e = int(_nD/4)
+            self.nD = [nD_e, nD_e, nD_e, _nD - 3*nD_e]
+            
+        if not isNumberArray(self.nD) or len(self.nD) != 4:
+            raise ValueError(" \
+                [ERROR] Rhombus: Invalid data type for the argument `num_dot`. \
+                Make sure it is either an integer or a tuple with 4 numeric elements. \
+            ")
+        
+        if min(self.nD) < 2:
+            raise ValueError(" \
+                [ERROR] Rhombus: Each side should consist of at least 2 dots. \
+            ")
         
         top = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[0], 
             p1 = (0, self.h/2), 
             p2 = (self.w/2, 0)
         )
         right = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[1], 
             p1 = (self.w/2, 0), 
             p2 = (0, -self.h/2)
         )
         bottom = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[2], 
             p1 = (0, -self.h/2), 
             p2 = (-self.w/2, 0)
         )
         left = Segment(
-            num_dot=self.nD, 
+            num_dot=self.nD[3], 
             p1 = (-self.w/2, 0), 
             p2 = (0, self.h/2)
         )
 
         super().__init__(
             vertices=connect_edges(top, right, bottom, left),
-            gem_type=gem_type, 
             **kwargs
         )
 
     def __len__(self) -> int:
-        return 4*(self.nD - 1)
+        return sum(self.nD)-4
     
     def __hash__(self) -> int:
-        return super().__hash__() + hash((self.gem_type, self.h, self.w, self.nD))
+        return super().__hash__() + hash((self.gem_type, self.h, self.w, tuple(self.nD)))
     
 
 class Trapezoid(Polygon2D):
+    @geminit({'size':'s', 'num_dot':'n'})
     def __init__(
         self,
-        h:float = None,
-        wt:float = None,
-        wb:float = None,
-        nD:Union[int, Tuple[int, int, int]] = None,
-        opt:float = 0,
+        s:List[float] = None,
+        n:Union[int, Tuple[int, int, int, int]] = 32,
         **kwargs
-    ):
+    ) -> None:
         """
         A quadrilateral that has at least one pair of parallel sides.
         
         Args:
-            h | height (float): height of the trapezoid
-            wt | width_top (float): width of the top side
-            wb | width_bottom (float): width of the bottom side
-            nD | num_dot (int | (int, int, int)): number of dots consisting of top/bottom/vertical side
-                If a single numeric value is given, then every edge have the same number of dots.
-                Or, you can determine the number of dots in each sides differently by giving a tuple for the `num_dot` argument. 
-                ex) num_dot = (2,4,5): top=2, bottom=4, vertical edge=5
-            opt (float, optional): determine the position in x-aixs of the top side
-                `opt=k` will translate the top side to the left as much as `k`.
+            s | size (list | tuple): specify the length of each side.
+                ex) size = (8, 6): height=8, width=6 (Indeed, the result is `Rectangle`)
+                ex) size = (8, 6, 10): height=8, length of top side=6, length of bottom side=10
+                ex) size = (5, 6, 7, 8): length of top=5, right=6, bottom=7, left=8, respectively 
+            n | num_dot (int | tuple): number of dots consisting of each side.
+                If a numeric value is given, then the geometry includes `n` dots on its circumference.
+                Or, you can determine the number of dots on each sides respectively,
+                by giving a tuple for the `num_dot` argument.
+                ex) num_dot = (7,8,9,10): #dots on top/right/bottom/left side = 7/8/9/10
         """
-        gem_type = self.__class__.__name__
+        self.s, self.nD = s, n
 
-        self.h, self.wt, self.wb, nD = assignArg(
-            gem_type, 
-            [h, wt, wb, nD], 
-            ['height', 'width_top', 'width_bottom', 'num_dot'], 
-            kwargs
-        )
-
-        self.translate_top = opt
-
-        if _isNumber(nD):
-            self.ntD, self.nbD, self.nsD = map(int, [nD]*3)
-        else :
-            self.ntD, self.nbD, self.nsD = nD
-
-        if self.nbD < 2 or self.ntD < 2 or self.nsD < 2 :
-            raise ValueError("[ERROR] %s: each side should consist of at least 2 dots"%(gem_type))
+        if not isNumberArray(s) or len(s) < 2 or len(s) > 4:
+            raise(" \
+                [ERROR] Trapezoid: Invaild input type is given for the argument `size`. \
+            ")
         
+        if len(s) == 2:
+            self.s = [s[1], s[0], s[1], s[0]]
+        
+        if len(s) == 3:
+            l_v = sqrt(((s[2]-s[1])/2)**2 + s[0]**2)
+            self.s = [s[1], l_v, s[2], l_v]
+
+        if abs(self.s[1] - self.s[3]) > abs(self.s[0] - self.s[2]) \
+        or abs(self.s[0] - self.s[2]) >= self.s[1] + self.s[3] :
+            raise(" \
+                [ERROR] Trapezoid: Given four lengths can't constitute \
+                the consecutive sides of trapezoid. \
+            ")
+
+        if isNumber(n):
+            _s = sum(self.s)
+            _nD = n + 4
+            nD_t = int(_nD*self.s[0]/_s)
+            nD_r = int(_nD*self.s[1]/_s)
+            nD_b = int(_nD*self.s[2]/_s)
+            self.nD = [nD_t, nD_r, nD_b, _nD - (nD_t + nD_r + nD_b)]
+            
+        if not isNumberArray(self.nD) or len(self.nD) != 4:
+            raise ValueError(" \
+                [ERROR] Trapezoid: Invalid data type for the argument `num_dot`. \
+                Make sure it is either an integer or a tuple with 4 numeric elements. \
+            ")
+        
+        if min(self.nD) < 2:
+            raise ValueError(" \
+                [ERROR] Trapezoid: Each side should consist of at least 2 dots. \
+            ")
+
+        l = (self.s[1])**2 - (self.s[3])**2 + (self.s[2])**2 - (self.s[0])**2
+        x = abs(l/(2*(self.s[0] + self.s[2])))
+
+        y = sqrt((self.s[1])**2 - x**2)
+
         top = Segment(
-            num_dot=self.ntD, 
-            p1 = (-self.wt/2 + self.translate_top, self.h/2), 
-            p2 = (self.wt/2 + self.translate_top, self.h/2)
+            num_dot=self.nD[0], 
+            p1 = (-self.s[0], 0), 
+            p2 = (0, 0)
         )
         right = Segment(
-            num_dot=self.nsD, 
-            p1 = (self.wt/2 + self.translate_top, self.h/2), 
-            p2 = (self.wb/2, -self.h/2)
+            num_dot=self.nD[1], 
+            p1 = (0, 0), 
+            p2 = (x, -y)
         )
         bottom = Segment(
-            num_dot=self.nbD, 
-            p1 = (self.wb/2, -self.h/2), 
-            p2 = (-self.wb/2, -self.h/2)
+            num_dot=self.nD[2], 
+            p1 = (x, -y), 
+            p2 = (x-self.s[2], -y)
         )
         left = Segment(
-            num_dot=self.nsD, 
-            p1 = (-self.wb/2, -self.h/2), 
-            p2 = (-self.wt/2 + self.translate_top, self.h/2)
+            num_dot=self.nD[3], 
+            p1 = (x-self.s[2], -y), 
+            p2 = (-self.s[0], 0)
         )
 
+        coord = connect_edges(top, right, bottom, left)
+        coord[:, 0] -= (2*x + self.s[0] - self.s[2])/4
+        coord[:, 1] -= (-y/2)
+
         super().__init__(
-            vertices=connect_edges(top, right, bottom, left),
-            gem_type=gem_type, 
+            vertices=coord,
             **kwargs
         )
 
     def __len__(self) -> int:
-        return self.nbD + self.ntD + 2*self.nsD - 4
+        return sum(self.nD) - 4
     
     def __hash__(self) -> int:
-        return super().__hash__() + hash((self.gem_type, self.h, self.wt, self.wb, self.ntD, self.nbD, self.nsD))
+        return super().__hash__() + hash((self.gem_type, tuple(self.s), tuple(self.nD)))
     
 
+@alias({'size':'s', 'num_dot':'n'})
 def RightTrapezoid(
-    h:float = None,
-    wt:float = None,
-    wb:float = None,
-    nD:Union[int, Tuple[int, int, int]] = None,
+    s:Tuple[float, float, float] = None,
+    n:Union[int, Tuple[int, int, int, int]] = 32,
     **kwargs
-):
+) -> Trapezoid:
     """
     A right trapezoid has two adjacent right angles.
 
     Args:
-        h | height (float): height of the trapezoid
-        wt | width_top (float): width of the top side
-        wb | width_bottom (float): width of the bottom side
-        nD | num_dot (int | (int, int, int)): number of dots consisting of top/bottom/vertical side
-            If a single numeric value is given, then every edge have the same number of dots.
-            Or, you can determine the number of dots in each sides differently by giving a tuple for the `num_dot` argument. 
-            ex) num_dot = (2,4,5): top=2, bottom=4, vertical edge=5
+        s | size (tuple): specify the length of each side.
+            ex) size = (8, 6, 10): height=8, length of top side=6, length of bottom side=10
+        n | num_dot (int | tuple): number of dots consisting of each side.
+            If a numeric value is given, then the geometry includes `n` dots on its circumference.
+            Or, you can determine the number of dots on each sides respectively,
+            by giving a tuple for the `num_dot` argument.
+            ex) num_dot = (7,8,9,10): #dots on top/right/bottom/left side = 7/8/9/10
     """
-    return Trapezoid(h, wt, wb, nD, (wt-wb)/2, **kwargs)
+    if not isNumberArray(s) or len(s) != 3:
+        raise(" \
+            [ERROR] RightTrapezoid: Invaild input type is given for the argument `size`. \
+        ")
+    
+    s = [s[1], sqrt(abs(s[1]-s[2])**2 + s[0]**2), s[2], s[0]]
+
+    return Trapezoid(s, n, **kwargs)
     
 
 class Rectangle(Polygon2D):
+    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
         h:float = None,
         w:float = None,
-        nD:Union[int, Tuple[int, int]] = None,
+        n:Union[int, Tuple[int, int, int, int]] = 32,
         **kwargs
-    ):
+    ) -> None:
         """
         A four-sided polygon with four right angles.
         
         Args:
-            h | height (float): length of vertical sides
-            w | width (float): length of horizontal sides
-            nD | num_dot (int | (int, int)): number of dots consisting of horizontal/vertical side
-                If a single numeric value is given, then every edge have the same number of dots.
-                Or, you can determine the number of dots in each sides differently by giving a tuple for the `num_dot` argument. 
-                ex) num_dot = (2,4): horizontal edge=2, vertical edge=4
+            h | height (float): length of vertical sides.
+            w | width (float): length of horizontal sides.
+            n | num_dot (int | tuple): number of dots consisting of each side.
+                If a numeric value is given, then the geometry includes `n` dots on its circumference.
+                Or, you can determine the number of dots on each sides respectively,
+                by giving a tuple for the `num_dot` argument.
+                ex) num_dot = (7,8,9,10): #dots on top/right/bottom/left side = 7/8/9/10
         """
-        gem_type = self.__class__.__name__
+        self.h, self.w, self.nD = h, w, n
 
-        self.h, self.w, nD = assignArg(
-            gem_type, 
-            [h, w, nD], 
-            ['height', 'width', 'num_dot'], 
-            kwargs
-        )
-
-        if _isNumber(nD):
-            self.nwD, self.nhD = map(int, [nD]*2)
-        else :
-            self.nwD, self.nhD = nD
-
-        if self.nwD < 2 or self.nhD < 2 :
-            raise ValueError("[ERROR] %s: each side should consist of at least 2 dots"%(gem_type))
+        if isNumber(n):
+            _s = 2*w + 2*h
+            _nD = n + 4
+            nD_tb = int(_nD * w/_s)
+            nD_lr = int(_nD * h/_s)
+            self.nD = [nD_tb, nD_lr, nD_tb, _nD - 2*nD_tb - nD_lr]
+            
+        if not isNumberArray(self.nD) or len(self.nD) != 4:
+            raise ValueError(" \
+                [ERROR] Rectangle: Invalid data type for the argument `num_dot`. \
+                Make sure it is either an integer or a tuple with 4 numeric elements. \
+            ")
+        
+        if min(self.nD) < 2:
+            raise ValueError(" \
+                [ERROR] Rectangle: Each side should consist of at least 2 dots. \
+            ")
 
         top = Segment(
-            num_dot=self.nwD, 
+            num_dot=self.nD[0], 
             p1 = (-self.w/2, self.h/2), 
             p2 = (self.w/2, self.h/2)
         )
         right = Segment(
-            num_dot=self.nhD, 
+            num_dot=self.nD[1], 
             p1 = (self.w/2, self.h/2), 
             p2 = (self.w/2, -self.h/2)
         )
         bottom = Segment(
-            num_dot=self.nwD, 
+            num_dot=self.nD[2], 
             p1 = (self.w/2, -self.h/2), 
             p2 = (-self.w/2, -self.h/2)
         )
         left = Segment(
-            num_dot=self.nhD, 
+            num_dot=self.nD[3], 
             p1 = (-self.w/2, -self.h/2), 
             p2 = (-self.w/2, self.h/2)
         )
 
         super().__init__(
             vertices=connect_edges(top, right, bottom, left),
-            gem_type=gem_type, 
             **kwargs
         )
 
     def __len__(self) -> int:
-        return 2*(self.nwD + self.nhD - 2)
+        return sum(self.nD) - 4
     
     def __hash__(self) -> int:
-        return super().__hash__() + hash((self.gem_type, self.h, self.w, self.nwD, self.nhD))
+        return super().__hash__() + hash((self.gem_type, self.h, self.w, tuple(self.nD)))
 
 
 class Kite(Polygon2D):
+    @geminit({'num_dot':'n'})
     def __init__(
         self,
         a:float,
         b:float,
-        nD:int = None,
+        n:Union[int, Tuple[int, int, int, int]] = 32,
         **kwargs
-    ):
+    ) -> None:
         """
         A quadrilateral with reflection symmetry across a diagonal.
 
         Args:
-            a, b (float, float): length of each side
-            nD | num_dot (int): number of dots consisting of a edge
+            a (float): length of top-left/top-right side.
+            b (float): length of bottom-left/bottom-right side.
+            n | num_dot (int | tuple): number of dots consisting of each side.
+                If a numeric value is given, then the geometry includes `n` dots on its circumference.
+                Or, you can determine the number of dots on each sides respectively,
+                by giving a tuple for the `num_dot` argument.
+                ex) num_dot = (7,8,9,10): (top_right=7, bottom_right=8, bottom_left=9, top_left=10)
         """
-        gem_type = self.__class__.__name__
+        self.a, self.b, self.nD = a, b, n
+
+        if isNumber(n):
+            _s = 2*(a+b)
+            _nD = n + 4
+            nD_t = int(_nD*a/_s)
+            nD_b = int(_nD*b/_s)
+            self.nD = [nD_t, nD_b, nD_b, _nD - 2*nD_b - nD_t]
+            
+        if not isNumberArray(self.nD) or len(self.nD) != 4:
+            raise ValueError(" \
+                [ERROR] Kite: Invalid data type for the argument `num_dot`. \
+                Make sure it is either an integer or a tuple with 4 numeric elements. \
+            ")
         
-        self.a = min(a, b)
-        self.b = max(a, b)
-
-        self.nD = assignArg(gem_type, [nD], ['num_dot'], kwargs)
-
-        if self.nD < 2 :
-            raise ValueError("[ERROR] %s: each side should consist of at least 2 dots"%(gem_type))
-
-        _a = self.a/sqrt(self.a*self.a + self.b*self.b)
-        _b = self.b/sqrt(self.a*self.a + self.b*self.b)
+        if min(self.nD) < 2:
+            raise ValueError(" \
+                [ERROR] Kite: Each side should consist of at least 2 dots. \
+            ")
         
+        _a = self.a/sqrt(self.a*self.a + self.b*self.b) # sin θ
+        _b = self.b/sqrt(self.a*self.a + self.b*self.b) # cos θ
+        _r = self.a*self.b/(self.a + self.b) # radius of inner circle
+
         top = Segment(
-            num_dot=self.nD, 
-            p1 = (0, self.a*_a), 
-            p2 = (self.a*_b, 0)
+            num_dot=self.nD[0], 
+            p1 = (0, self.a*_a + self.b*_b), 
+            p2 = (self.a*_b, self.b*_b)
         )
         right = Segment(
-            num_dot=self.nD, 
-            p1 = (self.a*_b, 0), 
-            p2 = (0, -self.b*_b)
+            num_dot=self.nD[1], 
+            p1 = (self.a*_b, self.b*_b), 
+            p2 = (0, 0)
         )
         bottom = Segment(
-            num_dot=self.nD, 
-            p1 = (0, -self.b*_b), 
-            p2 = (-self.a*_b, 0)
+            num_dot=self.nD[2], 
+            p1 = (0, 0), 
+            p2 = (-self.a*_b, self.b*_b)
         )
         left = Segment(
-            num_dot=self.nD, 
-            p1 = (-self.a*_b, 0), 
-            p2 = (0, self.a*_a)
+            num_dot=self.nD[3], 
+            p1 = (-self.a*_b, self.b*_b), 
+            p2 = (0, self.a*_a + self.b*_b)
         )
 
+        coord = connect_edges(bottom, left, top, right)
+        coord[:, 1] -= _r/_a
+
         super().__init__(
-            vertices=connect_edges(bottom, left, top, right),
-            gem_type=gem_type, 
+            vertices=coord,
             **kwargs
         )
 
     def __len__(self) -> int:
-        return 4*(self.nD - 1)
+        return sum(self.nD) - 4
     
     def __hash__(self) -> int:
-        return super().__hash__() + hash((self.gem_type, self.a, self.b, self.nD))
+        return super().__hash__() + hash((self.gem_type, self.a, self.b, tuple(self.nD)))
     
     
 class ConcaveKite(Polygon2D):
+    @geminit({'num_dot':'n'})
     def __init__(
         self,
         a:float,
         b:float,
-        nD:int = None,
+        n:Union[int, Tuple[int, int, int, int]] = 32,
         **kwargs
-    ):
+    ) -> None:
         """
         A Kite shape, but the line through one of the diagonals bisects the other.
 
         Args:
-            a, b (float, float): length of each side
-            nD | num_dot (int): number of dots consisting of a edge
+            a (float): length of top-left/top-right side.
+            b (float): length of bottom-left/bottom-right side.
+            n | num_dot (int | tuple): number of dots consisting of each side.
+                If a numeric value is given, then the geometry includes `n` dots on its circumference.
+                Or, you can determine the number of dots on each sides respectively,
+                by giving a tuple for the `num_dot` argument.
+                ex) num_dot = (7,8,9,10): (top_right=7, bottom_right=8, bottom_left=9, top_left=10)
         """
-        gem_type = self.__class__.__name__
+        self.a, self.b, self.nD = a, b, n
+
+        if isNumber(n):
+            _s = 2*(a+b)
+            _nD = n + 4
+            nD_t = int(_nD*a/_s)
+            nD_b = int(_nD*b/_s)
+            self.nD = [nD_t, nD_b, nD_b, _nD - 2*nD_b - nD_t]
+            
+        if not isNumberArray(self.nD) or len(self.nD) != 4:
+            raise ValueError(" \
+                [ERROR] Kite: Invalid data type for the argument `num_dot`. \
+                Make sure it is either an integer or a tuple with 4 numeric elements. \
+            ")
         
-        self.a = min(a, b)
-        self.b = max(a, b)
-
-        self.nD = assignArg(gem_type, [nD], ['num_dot'], kwargs)
-
-        if self.nD < 2 :
-            raise ValueError("[ERROR] %s: each side should consist of at least 2 dots"%(gem_type))
-
-        _s = self.a/sqrt(self.a*self.a + self.b*self.b)
-        _c = self.b/sqrt(self.a*self.a + self.b*self.b)
-        _t2 = 2*self.a*self.b/(self.b**2 - self.a**2)
+        if min(self.nD) < 2:
+            raise ValueError(" \
+                [ERROR] Kite: Each side should consist of at least 2 dots. \
+            ")
         
+        _a = self.a/sqrt(self.a*self.a + self.b*self.b) # sin θ
+        _b = self.b/sqrt(self.a*self.a + self.b*self.b) # cos θ
+        _r = self.a*self.b/(self.a + self.b) # radius of inner circle
+
         top = Segment(
-            num_dot=self.nD, 
-            p1 = (0, self.a*_s), 
-            p2 = ((self.b + self.a*_t2)*_s, (self.b + self.a*_t2)*_c - self.b*_c)
+            num_dot=self.nD[0], 
+            p1 = (0, -self.a*_a + self.b*_b), 
+            p2 = (self.a*_b, self.b*_b)
         )
         right = Segment(
-            num_dot=self.nD, 
-            p1 = ((self.b + self.a*_t2)*_s, (self.b + self.a*_t2)*_c - self.b*_c), 
-            p2 = (0, -self.b*_c)
+            num_dot=self.nD[1], 
+            p1 = (self.a*_b, self.b*_b), 
+            p2 = (0, 0)
         )
         bottom = Segment(
-            num_dot=self.nD, 
-            p1 = (0, -self.b*_c), 
-            p2 = (-(self.b + self.a*_t2)*_s, (self.b + self.a*_t2)*_c - self.b*_c)
+            num_dot=self.nD[2], 
+            p1 = (0, 0), 
+            p2 = (-self.a*_b, self.b*_b)
         )
         left = Segment(
-            num_dot=self.nD, 
-            p1 = (-(self.b + self.a*_t2)*_s, (self.b + self.a*_t2)*_c - self.b*_c), 
-            p2 = (0, self.a*_s)
+            num_dot=self.nD[3], 
+            p1 = (-self.a*_b, self.b*_b), 
+            p2 = (0, -self.a*_a + self.b*_b)
         )
 
+        coord = connect_edges(bottom, left, top, right)
+        coord[:, 1] -= 2*_r*_b
+
         super().__init__(
-            vertices=connect_edges(bottom, left, top, right),
-            gem_type=gem_type, 
+            vertices=coord,
             **kwargs
         )
 
@@ -641,40 +762,38 @@ class ConcaveKite(Polygon2D):
         return 4*(self.nD - 1)
     
     def __hash__(self) -> int:
-        return super().__hash__() + hash((self.gem_type, self.a, self.b, self.nD))
+        return super().__hash__() + hash((self.gem_type, self.a, self.b, tuple(self.nD)))
     
 
 class ConcaveStar(Polygon2D):
+    @geminit({'size':'s', 'num_vertex':'v', 'num_dot':'n'})
     def __init__(
         self,
         s:float = None,
-        nD:int = None,
-        nV:int = None, 
+        v:int = 5, 
+        n:int = 8,
         **kwargs
-    ):
+    ) -> None:
         """
         A star polygon without intersecting edges.
         
         Args:
-            s | size (float): distance between centroid and sharp corner of the star
-            nD | num_dot (int): number of dots consisting of a edge
-            nV | num_vertex (int): number of vertex
+            s | size (float): distance between centroid and sharp corner of the star.
+            v | num_vertex (int): number of vertex.
+            n | num_dot (int): number of dots consisting of a edge.
         """
-        gem_type = self.__class__.__name__
-
-        self.uS, self.nD, self.nV = assignArg(
-            gem_type, 
-            [s, nD, nV], 
-            ['size', 'num_dot', 'num_vertex'], 
-            kwargs
-        )
+        self.uS, self.nV, self.nD = s, v, n
 
         if self.nV < 3 :
-            raise ValueError("[ERROR] %s should have at least 3 vertices"%(gem_type))
+            raise ValueError(" \
+                [ERROR] ConcaveStar: Requires at least 3 vertices. \
+            ")
 
         if self.nD < 2 :
-            raise ValueError("[ERROR] %s: each side must have at least 2 dots"%(gem_type))
-        
+            raise ValueError(" \
+                [ERROR] ConcaveStar: Each side must have at least 2 dots. \
+            ")
+
         ang = pi/self.nV
         orD = self.uS * sin(ang) / (cos(2*ang)*cos(ang) + sin(2*ang)*sin(ang))
 
@@ -682,7 +801,6 @@ class ConcaveStar(Polygon2D):
 
         super().__init__(
             vertices=coord,
-            gem_type=gem_type, 
             **kwargs
         )
     
