@@ -221,3 +221,17 @@ if __name__ == "__main__":
     f.translate(5, 5)
     f.rotate(pi/6)
     plot(f)
+
+    """
+    fa = Circle(r=2, nD=48)
+    fa.fill()
+    fb = fa.copy()
+    fb.translateX(1.5)
+    print("Figure: Circle")
+    
+    f = union((fa, fb))
+    plot(f)
+    
+    f = intersect((fa, fb))
+    plot(f)
+    """

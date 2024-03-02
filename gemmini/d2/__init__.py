@@ -1,5 +1,85 @@
-from gemmini.d2.point2D import *
-from gemmini.d2.line2D import *
-from gemmini.d2.polar2D import *
-from gemmini.d2.polygon2D import *
+from gemmini.d2.line2D import (
+    Line2D,
+    Segment
+)
+from gemmini.d2.point2D import (
+    Pointcloud2D,
+    Point2D,
+    Grid
+)
+from gemmini.d2.polar2D import (
+    Circle,
+    Arc,
+    Ellipse,
+    Spiral,
+    HyperbolicSpiral,
+    ParabolicSpiral,
+    LituusSpiral,
+    LogarithmicSpiral,
+    BoundedSpiral,
+    Cycloid,
+    Epicycloid,
+    Hypocycloid,
+    CurvedPolygon,
+    Lissajous
+)
+from gemmini.d2.polygon2D import (
+    Polygon2D,
+    RegularPolygon,
+    IsoscelesTriangle,
+    RightTriangle,
+    Parallelogram,
+    Rhombus,
+    Trapezoid,
+    RightTrapezoid,
+    Rectangle,
+    Kite,
+    ConcaveKite,
+    ConcaveStar
+)
+from gemmini.d2.shape2D import (
+    CircularSector,
+    CircularSegment,
+    Wave,
+    Helix,
+    Parabola,
+    SymmetricSpiral,
+    Star,
+    Heart,
+    ButterFly,
+    CottonCandy,
+    Boomerang,
+    Stellate,
+    Shuriken,
+    Flower_A,
+    Flower_B,
+    Flower_C,
+    Flower_D,
+    Flower_E,
+    Flower_F,
+    FattyStar,
+    Moon,
+    Yinyang,
+    Polygontile,
+    Gear,
+    SnippedRect,
+    RoundedRect,
+    Plaque,
+    Ring,
+    BlockArc,
+    Cross_A,
+    Cross_B,
+    Cross_C,
+    SunCross,
+    CelticCross,
+    BasqueCross,
+    Lshape,
+    HalfFrame,
+    Arrow,
+    DoubleArrow,
+    ArrowPentagon,
+    ArrowChevron,
+    Teardrop,
+    Nosign
+)
 from gemmini.d2.transform2D import *

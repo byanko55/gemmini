@@ -10,26 +10,26 @@ class Line2D:
         slope:float = None,
     ) -> None:
         """
-        Infinite long straight line
-        Either p2 or slope has to be given
+        Infinite long straight line.
+        Either p2 or slope has to be given.
 
         Args:
-            p1, p2 (tuple): Points for the line to pass through
-            slope (float): The slope of the line
+            p1, p2 (tuple): Points for the line to pass through.
+            slope (float): The slope of the line.
         """
         if (type(p2) == type(None) and slope == None) or (type(p2) != type(None) and slope != None):
             raise ValueError(" \
-                [ERROR] Line2D: Either p2 or slope has to be given \
+                [ERROR] Line2D: Either p2 or slope has to be given. \
             ")
         
         if not isPoint(p1, dim=2) or (type(p2) != type(None) and not isPoint(p2, dim=2)):
             raise ValueError(" \
-                [ERROR] Line2D: Input vector does not match the format of 2D point \
+                [ERROR] Line2D: Input vector does not match the format of 2D point. \
             ")
         
         if slope != None and not isNumber(slope):
             raise ValueError(" \
-                [ERROR] Line2D: Tried to assign non-numetic value to `slope` \
+                [ERROR] Line2D: Tried to assign non-numetic value to `slope`. \
             ")
         
         self.p1 = p1
@@ -38,7 +38,7 @@ class Line2D:
 
     def grad(self) -> float:
         """
-        Return the gradient of the line
+        Return the gradient of the line.
         """
         if self.slope != None:
             return self.slope
@@ -50,22 +50,22 @@ class Line2D:
     
     def parallel(self, other:Any) -> bool:
         """
-        True, if two line are parallel
+        True, if two line are parallel.
         """
         if type(other) != Line2D:
             raise ValueError(" \
-                [Error] parallel: the input is not a `Line2D` object \
+                [ERROR] parallel: the input is not a `Line2D` object. \
             ")
 
         return self.grad() == other.grad()
     
     def orthog(self, other:Any) -> bool:
         """
-        True, if two line are orthogonal
+        True, if two line are orthogonal.
         """
         if type(other) != Line2D:
             raise ValueError(" \
-                [Error] orthognal: the input is not a `Line2D` object \
+                [ERROR] orthognal: the input is not a `Line2D` object. \
             ")
 
         ga = self.grad()
@@ -82,10 +82,10 @@ class Line2D:
     def orthog_point(self, p:Tuple[float, float]) -> Tuple[float, float]:
         """
         Return 'Foot of a perpendicular', the point where it intersects with 
-        a line through the given point `p`, that forms a right angle
+        a line through the given point `p`, that forms a right angle.
 
         Args:
-            p (tuple): a (x, y) coordinates
+            p (tuple): a (x, y) coordinates.
         """
         g = self.grad()
 
@@ -103,7 +103,7 @@ class Line2D:
     def _intersect_line(self, other:Any) -> Tuple[float, float]:
         if self.parallel(other):
             warnings.warn(" \
-                [WARN] intersect: Two line are parallel \
+                [WARN] intersect: Two line are parallel. \
             ")
             
             return None, None
@@ -159,7 +159,7 @@ class Line2D:
     
     def intersect(self, other:Any) -> Tuple[float, float]:
         """
-        Return the coordinates of intersection point with another line/geometry
+        Return the coordinates of intersection point with another line/geometry.
         """
         if type(self) == type(other):
             return self._intersect_line(other)
@@ -168,22 +168,22 @@ class Line2D:
             return self._intersect_gem(other)
         
         raise ValueError(" \
-            [Error] intersect: the class of input is neither Line2D nor Geometry2D \
+            [ERROR] intersect: the class of input is neither Line2D nor Geometry2D. \
         ")
     
-    def on(self, other:Union[Tuple[float, float], Geometry2D]):
+    def on(self, other:Union[Tuple[float, float], Geometry2D]) -> bool:
         """
-        Check whether a point or geometry is on the line
+        Check whether a point or geometry is on the line.
 
         Args:
-            other ((float, float) | Geometry2D]): can be either a (x, y) coordinates or geometric object
+            other ((float, float) | Geometry2D]): can be either a (x, y) coordinates or geometric object.
         """
         if isPoint(other):
             return other[1] == self.grad()*(other[0] - self.p1[0]) + self.p1[1]
         
         if not isinstance(other, Geometry2D):
             raise ValueError(" \
-                [Error] on: Input should be a 2D point or geometric object \
+                [ERROR] on: Input should be a 2D point or geometric object. \
             ")
 
         coord = other.coords()
@@ -222,16 +222,16 @@ class Line2D:
     def __str__(self) -> str:
         return 'Line2D'
     
-    def __eq__(self, other:Any):
+    def __eq__(self, other:Any) -> bool:
         if not isinstance(other, Line2D):
             return False
 
         return (self.grad() == other.grad() and other.on(self.p1))
 
-    def __ne__(self, other:Any):
+    def __ne__(self, other:Any) -> bool:
         return not self.__eq__(other)
     
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.p1, self.grad()))
     
 
@@ -243,21 +243,21 @@ class Segment(Geometry2D):
         arg2:Union[float, Tuple[int, int]] = None,
         n:int = 16,
         **kwargs
-    ):
+    ) -> None:
         """
-        A part of a straight line that is bounded by two distinct end points
+        A part of a straight line that is bounded by two distinct end points.
         You can draw it in 2 ways:
 
-            1) by specifying the `length` and `slope` of the line segment
+            1) by specifying the `length` and `slope` of the line segment.
                 ex) Segment(3, size=128, slope=pi/3)
-            2) by specifying the `coordinates` of two end-points: 'p1', 'p2'
+            2) by specifying the `coordinates` of two end-points: 'p1', 'p2'.
                 ex) Segment(3, p1 = (8,8), p2 = (10,10))
 
         Args:
-            s | size (int): length of segment
-            slope (float): slope or gradient of a line
-            p1, p2 (float, float): End-points of the line segment
-            n | num_dot (int): number of dots consisting of the line segment
+            s | size (int): length of segment.
+            slope (float): slope or gradient of a line.
+            p1, p2 (float, float): End-points of the line segment.
+            n | num_dot (int): number of dots consisting of the line segment.
         """
         self.nD = n
 
@@ -271,13 +271,13 @@ class Segment(Geometry2D):
             self.p2 = arg2
         else :
             raise ValueError(" \
-                [ERROR] %s: You can draw it in 2 ways \
+                [ERROR] Segment: You can draw it in 2 ways: \
                 \
-                1) by specifying the `length` and `slope` of the line segment \
+                1) by specifying the `length` and `slope` of the line segment. \
                     ex) Segment(3, size=128, slope=75) \
-                2) by specifying the `coordinates` of two end-points: 'p1', 'p2' \
+                2) by specifying the `coordinates` of two end-points: 'p1', 'p2'. \
                     ex) Segment(3, p1 = (8,8), p2 = (10,10)) \
-            "%(self.gem_type))
+            ")
 
         super().__init__(
             gem_type=self.gem_type,

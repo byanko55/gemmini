@@ -829,7 +829,7 @@ class ConcaveKite(Polygon2D):
         if isNumberArray(s):
             if len(s) != 2:
                 raise(" \
-                    [ERROR] Kite: Argument `size` must be either a single number \
+                    [ERROR] ConcaveKite: Argument `size` must be either a single number \
                     or a pair of numbers. \
                 ")
                 

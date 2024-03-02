@@ -34,12 +34,13 @@ def test_line2D_3():
 
     x, y = b.intersect(c)
     assert (abs(x - (-0.8)) <= 1e-6 and abs(y-0.4) <= 1e-6)
+    canva.add((x, y))
+
     x, y = a & c
     assert (abs(x - 3/4) <= 1e-6 and abs(y - (-3/8)) <= 1e-6)
+    canva.add((x, y))
 
-    canva.add(a)
-    canva.add(b)
-    canva.add(c)
+    canva.add([a, b, c])
     canva.plot()
 
 def test_segment():
