@@ -6,13 +6,13 @@ from scipy.spatial import ConvexHull, Delaunay
 
 def connect_edges(*args:object) -> np.ndarray:
     """
-    Connect multiple edges (or curves) to form a single geometry
+    Connect multiple edges (or curves) to form a single geometry.
     
     Args:
-        *args (Geometry2D, ...): A series of figures to be assembled with
+        *args (Geometry2D, ...): A series of figures to be assembled with.
 
     Returns:
-        xy (np.ndarray): (x, y) coordinates consisting of the resulted geometry
+        xy (np.ndarray): (x, y) coordinates consisting of the resulted geometry.
     """
     xy = [e[:-1] for e in args]
 
@@ -21,14 +21,14 @@ def connect_edges(*args:object) -> np.ndarray:
 
 def convex_hull(xy:COORDINATES) -> np.ndarray:
     """
-    Convex hulls in N dimensions
+    Convex hulls in N dimensions.
 
     Args:
-        xy (tuple | list | np.ndarray): iterable container of points
+        xy (tuple | list | np.ndarray): iterable container of points.
 
     Returns:
-        exterior_points (np.ndarray): the (x, y) coordinates of vertices that consist of the boundary
-        exterior_edges (list): list of edges where their two endpoints are included in exterior points 
+        exterior_points (np.ndarray): the (x, y) coordinates of vertices that consist of the boundary.
+        exterior_edges (list): list of edges where their two endpoints are included in exterior points. 
     """
     hull = ConvexHull(xy)
 
@@ -42,18 +42,18 @@ def convex_hull(xy:COORDINATES) -> np.ndarray:
 
 def concave_hull(xy:COORDINATES, alpha:float = 0.9) -> np.ndarray:
     """
-    Compute the concave hull of a set of points
-    See reference: https://gist.github.com/jclosure/d93f39a6c7b1f24f8b92252800182889
+    Compute the concave hull of a set of points.
+    See reference: https://gist.github.com/jclosure/d93f39a6c7b1f24f8b92252800182889.
 
     Args:
-        xy (tuple | list | np.ndarray): iterable container of points
-        alpha (float): alpha value to influence the gooeyness of the border
-            Smaller numbers don't fall inward as much as larger numbers
+        xy (tuple | list | np.ndarray): iterable container of points.
+        alpha (float): alpha value to influence the gooeyness of the border.
+            Smaller numbers don't fall inward as much as larger numbers.
             Too large, and you lose everything!
 
     Returns:
-        exterior_points (np.ndarray): the (x, y) coordinates of vertices that consist of the boundary
-        exterior_edges (list): list of edges where their two endpoints are included in exterior points 
+        exterior_points (np.ndarray): the (x, y) coordinates of vertices that consist of the boundary.
+        exterior_edges (list): list of edges where their two endpoints are included in exterior points.
     """
     if len(xy) < 4:
         # When you have a triangle, there is no sense in computing an alpha shape

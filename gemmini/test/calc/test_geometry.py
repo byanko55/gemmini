@@ -9,9 +9,9 @@ from gemmini.d2.line2D import Segment
 import matplotlib.pyplot as plt
 
 def test_connect_edges():
-    a = Segment(7, (0, 0), (3, 4))
-    b = Segment(5, (3, 4), (4, -2))
-    c = Segment(6, (4, -2), (-3, -1))
+    a = Segment((0, 0), (3, 4), 7)
+    b = Segment((3, 4), (4, -2), 6)
+    c = Segment((4, -2), (-3, -1), 5)
 
     points = connect_edges(a, b, c)
     xs, ys = points[:, 0], points[:, 1]

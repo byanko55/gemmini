@@ -26,7 +26,7 @@ if __name__ == "__main__":
     assert _o.shape == (2, 2)
     assert type(_o) == np.ndarray
     
-    nx, ny = (20, 20)
+    nx, ny = (10, 10)
     x = np.linspace(-10, 10, nx)
     y = np.linspace(-10, 10, ny)
     xv, yv = np.meshgrid(x, y)

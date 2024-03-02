@@ -79,7 +79,7 @@ def test_gem_coord():
 
     
 def test_interior_pixels():
-    f = RegularPolygon(s=5, nD=10, nV=5)
+    f = RegularPolygon(s=5, n=10, v=5)
     points = f.coords()
     _c = interior_pixels(points)
     

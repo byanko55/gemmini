@@ -5,24 +5,24 @@ import matplotlib.path as pth
 
 def to_ndarray(xy:COORDINATES) -> np.ndarray:
     """
-    Return the coordinate lists as a numpy array with dimension: (N, 2)
+    Return the coordinate lists as a numpy array with dimension: (N, 2).
     
     Args:
-        xy (tuple | list | np.ndarray): a series of (x, y) coordinates
+        xy (tuple | list | np.ndarray): a series of (x, y) coordinates.
     """
     res = np.copy(xy)
     
     if isNumber(res[0]):
         if len(res) != 2:
             raise ValueError(" \
-                [ERROR] to_ndarray: Given matrix is not convertible to a numpy array with shape (N, 2) \
+                [ERROR] to_ndarray: Given matrix is not convertible to a numpy array with shape (N, 2). \
             ")
         
         return res.reshape(-1, 2)
     
     if not isPoint(res[0], dim=2):
         raise ValueError(" \
-            [ERROR] to_ndarray: Given matrix is not convertible to a numpy array with shape (N, 2) \
+            [ERROR] to_ndarray: Given matrix is not convertible to a numpy array with shape (N, 2). \
         ")
     
     return res
@@ -30,17 +30,17 @@ def to_ndarray(xy:COORDINATES) -> np.ndarray:
 
 def dist(p:Tuple[Any, ...], q:Tuple[Any, ...]) -> float:
     """
-    Returns the Euclidean distance between two points
+    Returns the Euclidean distance between two points.
 
     Args:
         p, q (tuple): the coordinates of that point.
 
     Returns:
-        A float value, representing the Euclidean distance between p and q
+        A float value, representing the Euclidean distance between p and q.
     """
     if not (isPoint(p) and isPoint(q)):
         raise ValueError(" \
-            [ERROR] dist: Tried to give input that can't be represented as a cartesian point \
+            [ERROR] dist: Tried to give input that can't be represented as a cartesian point. \
         ")
     
     return np.linalg.norm(np.array(p) - np.array(q))
@@ -48,18 +48,18 @@ def dist(p:Tuple[Any, ...], q:Tuple[Any, ...]) -> float:
 
 def mesh_dist(a:np.ndarray, b:np.ndarray) -> np.ndarray:
     """
-    Calculate pairwise distances between two different sets of points
+    Calculate pairwise distances between two different sets of points.
      
     Args:
-        a, b (np.ndarray): two coordinate lists
+        a, b (np.ndarray): two coordinate lists.
 
     Returns:
-        res (np.ndarray): pairs of distance
-            res[i][j] = Euclidean distance between the `i`-th point of `a` and `j`-th point of `b`
+        res (np.ndarray): pairs of distance.
+            res[i][j] = Euclidean distance between the `i`-th point of `a` and `j`-th point of `b`.
     """
     if not isPointSet(a) or not isPointSet(b):
         raise ValueError(" \
-            [Error] mesh_dist: The dimension of input arrays should be (N, 2) \
+            [ERROR] mesh_dist: The dimension of input arrays should be (N, 2). \
         ")
     
     return np.sqrt(((a[:, None] - b[:, :, None]) ** 2).sum(0))
@@ -67,12 +67,12 @@ def mesh_dist(a:np.ndarray, b:np.ndarray) -> np.ndarray:
 
 def outer_product(p:Tuple[float, float], q:Tuple[float, float], r:Tuple[float, float] = None) -> float:
     """
-    Compute the outer product of given vectors
+    Compute the outer product of given vectors.
 
     Args:
-        p, q (tuple): two cartesian coordinates
+        p, q (tuple): two cartesian coordinates.
         r (tuple, Optional): If a 3rd coordinates `r` is provided, 
-            then it will return the outer product of two vectors: `p -> q` and `p -> r`
+            then it will return the outer product of two vectors: `p -> q` and `p -> r`.
     """
     if type(r) == type(None):
         return p[0]*q[1] - q[0]*p[1]
@@ -82,14 +82,14 @@ def outer_product(p:Tuple[float, float], q:Tuple[float, float], r:Tuple[float, f
 
 def to_cartesian(r:Union[float, np.ndarray], theta:Union[float, np.ndarray]) -> np.ndarray:
     """
-    Transforms polar coordinates (r, θ) into cartesian coordinates (x, y)
+    Transforms polar coordinates (r, θ) into cartesian coordinates (x, y).
     
     Args:
-        r (float | np.ndarray): radius
-        theta (float | np.ndarray): angle (in radian)
+        r (float | np.ndarray): radius.
+        theta (float | np.ndarray): angle (in radian).
 
     Returns:
-        xy (np.ndarray): coordinates on cartesian system
+        xy (np.ndarray): coordinates on cartesian system.
     """
     
     if isNumber(theta):
@@ -98,8 +98,8 @@ def to_cartesian(r:Union[float, np.ndarray], theta:Union[float, np.ndarray]) -> 
         xy = np.stack((r*np.cos(theta), r*np.sin(theta)), axis=1)
     else :
         raise ValueError(" \
-            [ERROR] to_cartesian: Both `radius` and `theta` should be a floating value \
-            or list of numbers \
+            [ERROR] to_cartesian: Both `radius` and `theta` should be a floating value, \
+            or list of numbers. \
         ")
     
     return xy
@@ -107,14 +107,14 @@ def to_cartesian(r:Union[float, np.ndarray], theta:Union[float, np.ndarray]) -> 
 
 def centroid(xy:COORDINATES) -> Tuple[float, float]:
     """
-    Returns The centroid of a given points
+    Returns The centroid of a given points.
 
     Args:
-        xy (tuple | list | np.ndarray): a series of (x, y) coordinates
+        xy (tuple | list | np.ndarray): a series of (x, y) coordinates.
     """
     if not isPointSet(xy):
         raise ValueError(" \
-            [Error] centroid: Input array should be 2D or 3D point sets \
+            [ERROR] centroid: Input array should be 2D or 3D point sets. \
         ")
     
     _xm = np.mean([p[0] for p in xy])
@@ -125,17 +125,17 @@ def centroid(xy:COORDINATES) -> Tuple[float, float]:
 
 def bounding_box(xy:COORDINATES) -> Tuple[float, float, float, float]:
     """
-    Border's coordinates on the X and Y axes that enclose a geometric object
+    Border's coordinates on the X and Y axes that enclose a geometric object.
     
     Args:
-        xy (tuple | list | np.ndarray): a series of (x, y) coordinates
+        xy (tuple | list | np.ndarray): a series of (x, y) coordinates.
 
     Returns:
-        (x_min, y_min, x_max, y_max): the minimum/maximum position of x, y axes
+        (x_min, y_min, x_max, y_max): the minimum/maximum position of x, y axes.
     """
     if not isPointSet(xy):
         raise ValueError(" \
-            [Error] bounding_box: Input array should be 2D or 3D point sets \
+            [ERROR] bounding_box: Input array should be 2D or 3D point sets. \
         ")
     
     if isinstance(xy, list):
@@ -156,11 +156,11 @@ def bounding_box(xy:COORDINATES) -> Tuple[float, float, float, float]:
 
 def interior_pixels(xy:COORDINATES, density:float = 16) -> np.ndarray:
     """
-    Get a grid of pixels located inside of the geometric object
+    Get a grid of pixels located inside of the geometric object.
     
     Args:
-        xy (COORDINATES): a matrix of 2D coordinates
-        density (float): dot density of a result geometry
+        xy (COORDINATES): a matrix of 2D coordinates.
+        density (float): dot density of a result geometry.
     """
     border = to_ndarray(xy)
     lb, bb, rb, tb = bounding_box(border)
@@ -185,11 +185,11 @@ def interior_pixels(xy:COORDINATES, density:float = 16) -> np.ndarray:
 
 def rotate_2D(xy:COORDINATES, theta:float) -> COORDINATES:
     """
-    Rotate points in the xy plane anti-clockwise through an angle `theta`
+    Rotate points in the xy plane anti-clockwise through an angle `theta`.
 
     Args:
-        xy (tuple | np.ndarray): collection of coordinates on 2D space
-        theta (float): rotation angle (in radian)
+        xy (tuple | np.ndarray): collection of coordinates on 2D space.
+        theta (float): rotation angle (in radian).
     """
     if isPoint(xy):
         x, y = xy
