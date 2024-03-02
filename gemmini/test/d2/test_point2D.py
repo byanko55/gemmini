@@ -23,7 +23,7 @@ def test_point():
 
 def test_grid():
     canva = Canvas()
-    g = Grid(5, 4, num_dot=(10, 8))
+    g = Grid((5, 4), num_dot=(10, 8))
     
     canva.add(g)
     canva.plot()

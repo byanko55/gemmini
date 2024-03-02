@@ -9,10 +9,10 @@ class Pointcloud2D(Geometry2D):
         **kwargs
     ) -> None:
         """
-        A discrete set of data points in 2D space
+        A discrete set of data points in 2D space.
 
         Args:
-            points (list): set of cartesian coordinates (x, y)
+            points (list): set of cartesian coordinates (x, y).
         """
         if not hasattr(self, 'gem_type'):
             self.gem_type = 'Pointcloud2D'
@@ -21,7 +21,7 @@ class Pointcloud2D(Geometry2D):
         
         if len(self.points.shape) != 2 or self.points.shape[1] != 2 :
             raise ValueError(" \
-                [ERROR] Pointcloud2D: Input matrix does not match the format of 2D-point set \
+                [ERROR] Pointcloud2D: Input matrix does not match the format of 2D-point set. \
             ")
         
         super().__init__(
@@ -48,11 +48,11 @@ class Point2D(Pointcloud2D):
         **kwargs
     ) -> None:
         """
-        A single pixel
+        A single pixel.
 
         Args:
-            px (float): x-coordinate
-            py (float): y-coordinate
+            px (float): x-coordinate.
+            py (float): y-coordinate.
         """
         self.px = px
         self.py = py
@@ -67,26 +67,42 @@ class Point2D(Pointcloud2D):
 
 
 class Grid(Pointcloud2D):
-    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
-        h:float = None,
-        w:float = None,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
         n:Union[int, Tuple[int, int]] = 16,
         **kwargs
-    ):
+    ) -> None:
         """
-        A four-sided polygon with four right angles
+        A four-sided polygon with four right angles.
         
         Args:
-            h | height (float): length of vertical sides
-            w | width (float): length of horizontal sides
-            n | num_dot (int | (int, int)): determines the number of row/column
-                If a single number is given, then the grid will have equal number of rows and columns
-                Or, you can give a tuple (N, M), to generate `N`-by-`M` grid
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
+            h | height (float): length of vertical sides.
+            w | width (float): length of horizontal sides.
+            n | num_dot (int | (int, int)): determines the number of row/column.
+                If a single number is given, then the grid will have equal number of rows and columns.
+                Or, you can give a tuple (N, M), to generate `N`-by-`M` grid.
                 ex) num_dot = (2,4): grid with 2 rows and 4 columns
         """
         self.h, self.w = h, w
+        
+        if isNumber(s) and s != -1:
+            self.h, self.w = map(int, [s]*2)
+        
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] Grid: Argument `size` must be either a single number or a pair of numbers. \
+                ")
+                
+            self.h, self.w = s[0], s[1]
 
         if isNumber(n):
             self.nr, self.nc = map(int, [n]*2)
@@ -95,7 +111,7 @@ class Grid(Pointcloud2D):
 
         if self.nr < 2 or self.nc < 2 :
             raise ValueError(" \
-                [ERROR] Grid: each row/column should consist of at least 2 dots \
+                [ERROR] Grid: Each row/column should consist of at least 2 dots. \
             ")
         
         x, y = np.meshgrid(
