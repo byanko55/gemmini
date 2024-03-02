@@ -11,11 +11,11 @@ class Curve2D(Geometry2D):
         **kwargs
     ) -> None:
         """
-        Parent class fot the figures that can be represented as polar coordinates
+        Parent class fot the figures that can be represented as polar coordinates.
 
         Args:
-            r (float): radius of the geometry
-            points (list | np.ndarray): set of points on the curve
+            r (float): radius of the geometry.
+            points (list | np.ndarray): set of points on the curve.
         """
         if not hasattr(self, 'gem_type'):
             self.gem_type = 'Curve2D'
@@ -25,7 +25,7 @@ class Curve2D(Geometry2D):
 
         if self.rD <= 0:
             raise ValueError(" \
-                [Error] %s: Got a non-positive value for the `radius` \
+                [ERROR] %s: Got a non-positive value for the `radius`. \
                 "%(self.gem_type)
             )
         
@@ -53,13 +53,13 @@ class Circle(Curve2D):
         r:float = None,
         n:int = 32,
         **kwargs
-    ):
+    ) -> None:
         """
-        A round plane figure whose boundary consists of points equidistant from a fixed point
+        A round plane figure whose boundary consists of points equidistant from a fixed point.
 
         Args:
-            r | radius (float): radius of the circle
-            n | num_dot (int): number of dots consisting of the border of the circle
+            r | radius (float): radius of the circle.
+            n | num_dot (int): number of dots consisting of the border of the circle.
         """
         self.rD, self.nD = r, n
 
@@ -87,20 +87,20 @@ class Arc(Curve2D):
         a:float = pi/2,
         n:int = 32,
         **kwargs
-    ):
+    ) -> None:
         """
-        A portion of a circumference (perimeter of a circle)
+        A portion of a circumference (perimeter of a circle).
 
         Args:
-            r | radius (float): radius of the arc
-            a | angle (float): central angle (unit: radian) of the arc
-            n | num_dot (int): number of dots consisting of the arc
+            r | radius (float): radius of the arc.
+            a | angle (float): central angle (unit: radian) of the arc.
+            n | num_dot (int): number of dots consisting of the arc.
         """
         self.rD, self.aG, self.nD = r, a, n
 
         if self.aG <= 0 or self.aG > 2*pi:
             raise ValueError(" \
-                [Error] Arc: The argument `angle` must be in range (0, 2π] \
+                [ERROR] Arc: The argument `angle` must be in range (0, 2π]. \
             ")
 
         theta = np.linspace(0, self.aG, self.nD)
@@ -120,28 +120,44 @@ class Arc(Curve2D):
 
     
 class Ellipse(Curve2D):
-    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
-        h:float = None,
-        w:float = None,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
         n:int = 32,
         **kwargs
-    ):
+    ) -> None:
         """
         A plane curve surrounding two focal points such that for all points on the curve, 
-        the sum of the two distances to the focal points is a constant
+        the sum of the two distances to the focal points is a constant.
 
         Args:
-            h | height (float): length of minor axis
-            w | width (float): length of major axis
-            n | num_dot (int): number of dots consisting of the border of the ellipse
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
+            h | height (float): length of minor axis.
+            w | width (float): length of major axis.
+            n | num_dot (int): number of dots consisting of the border of the ellipse.
         """
         self.rH, self.rW, self.nD = h, w, n
+        
+        if isNumber(s) and s != -1:
+            self.rH, self.rW = map(int, [s]*2)
+            
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] Ellipse: Argument `size` must be either a single number or a pair of numbers. \
+                ")
+                
+            self.rH, self.rW = s[0], s[1]
 
-        if h <= 0 or w <= 0 :
+        if self.rH <= 0 or self.rW <= 0 :
             raise(" \
-                [Error] Ellipse: The length of axes should be longer than 0 \
+                [ERROR] Ellipse: The length of axes should be longer than 0. \
             ")
 
         theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
@@ -166,22 +182,22 @@ class Spiral(Curve2D):
         a:float = 2*pi,
         n:int = 32,
         **kwargs
-    ):
+    ) -> None:
         """
         A curve on a plane that winds around a fixed center point at a continuously 
-        increasing or decreasing distance from the point
+        increasing or decreasing distance from the point.
 
         Args:
-            r | radius (float): radius of the spiral
+            r | radius (float): radius of the spiral.
             a | angle (float): determines the range of theta in polar equation (r, θ) of
-                the spiral (0 ≤ θ ≤ `a`, unit: radian)
-            n | num_dot (int): number of dots consisting of the spiral
+                the spiral (0 ≤ θ ≤ `a`, unit: radian).
+            n | num_dot (int): number of dots consisting of the spiral.
         """
         self.rD, self.aG, self.nD = r, a, n
 
         if self.aG <= 0:
             raise ValueError(" \
-                [Error] Spiral: Tried to assign non-positive value to the argument `angle` \
+                [ERROR] Spiral: Tried to assign non-positive value to the argument `angle`. \
             ")
 
         self.draw_func = None
@@ -213,19 +229,24 @@ def HyperbolicSpiral(
     a:float = 2*pi,
     n:int = 32,
     **kwargs
-):
+) -> Spiral:
     """
-    A type of spiral with a pitch angle that increases with distance from its center
+    A type of spiral with a pitch angle that increases with distance from its center.
 
     Args:
-        r | radius (float): radius of the spiral
+        r | radius (float): radius of the spiral.
         a | angle (float): determines the range of theta in polar equation (r, θ) of
-            the spiral (0 ≤ θ ≤ `a`, unit: radian)
-        n | num_dot (int): number of dots consisting of the spiral
+            the spiral (0 ≤ θ ≤ `a`, unit: radian).
+        n | num_dot (int): number of dots consisting of the spiral.
     """
     def _draw_curve(radius, theta):
-        rad = radius * theta[0]/theta
-        coord = to_cartesian(rad, theta)
+        aG = np.max(theta)
+        n = len(theta)
+        _x = np.array(list(range(1, n+1)))[::-1]
+        _theta = aG/_x
+        
+        rad = radius * _theta[0]/_theta
+        coord = to_cartesian(rad, _theta)
 
         return coord
 
@@ -237,16 +258,16 @@ def ParabolicSpiral(
     a:float = 2*pi,
     n:int = 32,
     **kwargs
-):
+) -> Spiral:
     """
     A plane curve with the property that the area between any two consecutive full turns
-    around the spiral is invariant
+    around the spiral is invariant.
 
     Args:
-        r | radius (float): radius of the spiral
+        r | radius (float): radius of the spiral.
         a | angle (float): determines the range of theta in polar equation (r, θ) of
-            the spiral (0 ≤ θ ≤ `a`, unit: radian)
-        n | num_dot (int): number of dots consisting of the spiral
+            the spiral (0 ≤ θ ≤ `a`, unit: radian).
+        n | num_dot (int): number of dots consisting of the spiral.
     """
     def _draw_curve(radius, theta):
         log_theta = np.sqrt(theta)
@@ -271,16 +292,16 @@ def LituusSpiral(
     a:float = 2*pi,
     n:int = 32,
     **kwargs
-):
+) -> Spiral:
     """
     lituus spiral is a spiral in which the angle θ is inversely proportional to 
-    the square of the radius r
+    the square of the radius r.
 
     Args:
-        r | radius (float): radius of the spiral
+        r | radius (float): radius of the spiral.
         a | angle (float): determines the range of theta in polar equation (r, θ) of
-            the spiral (0 ≤ θ ≤ `a`, unit: radian)
-        n | num_dot (int): number of dots consisting of the spiral
+            the spiral (0 ≤ θ ≤ `a`, unit: radian).
+        n | num_dot (int): number of dots consisting of the spiral.
     """
     def _draw_curve(radius, theta):
         log_theta = np.power(theta, -1/2)
@@ -298,21 +319,27 @@ def LogarithmicSpiral(
     a:float = 2*pi,
     n:int = 32,
     **kwargs
-):
+) -> Spiral:
     """
-    A logarithmic spiral, equiangular spiral, or growth spiral
+    A logarithmic spiral, equiangular spiral, or growth spiral.
 
     Args:
-        r | radius (float): radius of the spiral
+        r | radius (float): radius of the spiral.
         a | angle (float): determines the range of theta in polar equation (r, θ) of
-            the spiral (0 ≤ θ ≤ `a`, unit: radian)
-        n | num_dot (int): number of dots consisting of the spiral
+            the spiral (0 ≤ θ ≤ `a`, unit: radian).
+        n | num_dot (int): number of dots consisting of the spiral.
     """
     def _draw_curve(radius, theta):
-        exp_theta = np.exp(theta)
+        aG = np.max(theta)
+        n = len(theta)
+        _x = [log(i/n) for i in range(1, n+1)]
+        _x = np.array(_x)
+        _theta = _x + aG
+        
+        exp_theta = np.exp(_theta)
         rad = radius * exp_theta/exp_theta[-1]
 
-        coord = to_cartesian(rad, theta)
+        coord = to_cartesian(rad, _theta)
 
         return coord
 
@@ -324,15 +351,15 @@ def BoundedSpiral(
     a:float = 2*pi,
     n:int = 32,
     **kwargs
-):
+) -> Spiral:
     """
-    A spiral bounded in a circle with radius `r`
+    A spiral bounded in a circle with radius `r`.
 
     Args:
-        r | radius (float): radius of the spiral
+        r | radius (float): radius of the spiral.
         a | angle (float): determines the range of theta in polar equation (r, θ) of
-            the spiral (0 ≤ θ ≤ `a`, unit: radian)
-        n | num_dot (int): number of dots consisting of the spiral
+            the spiral (0 ≤ θ ≤ `a`, unit: radian).
+        n | num_dot (int): number of dots consisting of the spiral.
     """
     def _draw_curve(radius, theta):
         arc_theta = np.arctan(theta/(2*pi))
@@ -353,14 +380,14 @@ class Cycloid(Curve2D):
         a:float = 2*pi,
         n:int = 32,
         **kwargs
-    ):
+    ) -> None:
         """
-        Curve traced by a point on a circle as it rolls along a straight line without slipping
+        Curve traced by a point on a circle as it rolls along a straight line without slipping.
         
         Args:
-            r | radius (float): radius of the circle rolling over the x-axis
-            a | angle (float): angle through which the rolling circle has rotated (unit: radian)
-            n | num_dot (int): number of dots on the trail
+            r | radius (float): radius of the circle rolling over the x-axis.
+            a | angle (float): angle through which the rolling circle has rotated (unit: radian).
+            n | num_dot (int): number of dots on the trail.
         """
         self.rD, self.aG, self.nD = r, a, n
 
@@ -391,22 +418,22 @@ class Epicycloid(Curve2D):
         s:float = None,
         n:int = 256,
         **kwargs
-    ):
+    ) -> None:
         """
         A plane curve produced by tracing the path of a chosen point on the circumference of 
-        a circle called an epicycle which rolls without slipping around a fixed circle
+        a circle called an epicycle which rolls without slipping around a fixed circle.
         
         Args:
-            p, q (int) : determines the shape of the epicycloid
+            p, q (int) : determines the shape of the epicycloid.
                 number of cusps can be represented as: k = p/q 
-            s | size (float): height/width of the geometry
-            n | num_dot (int): number of dots on the trail
+            s | size (float): height/width of the geometry.
+            n | num_dot (int): number of dots on the trail.
         """
         self.p, self.q, self.uS, self.nD = p, q, s, n
 
         if p <= 0 or q <= 0 or type(p) != int or type(q) != int:
             raise ValueError(" \
-                [Error] Epicycloid: Both `p` and `q` must be positive integers \
+                [ERROR] Epicycloid: Both `p` and `q` must be positive integers. \
             ")
 
         k = self.p/self.q
@@ -437,22 +464,22 @@ class Hypocycloid(Curve2D):
         s:float = None,
         n:int = 256,
         **kwargs
-    ):
+    ) -> None:
         """
         A special plane curve generated by the trace of a fixed point on a small circle
-        that rolls within a larger circle
+        that rolls within a larger circle.
         
         Args:
-            p, q (int) : determines the shape of the hypocycloid
+            p, q (int) : determines the shape of the hypocycloid.
                 number of cusps can be represented as: k = p/q 
-            s | size (float): height/width of the geometry
-            nD | num_dot (int): number of dots on the trail
+            s | size (float): height/width of the geometry.
+            nD | num_dot (int): number of dots on the trail.
         """
         self.p, self.q, self.uS, self.nD = p, q, s, n
 
         if p <= 0 or q <= 0 or type(p) != int or type(q) != int:
             raise ValueError(" \
-                [Error] Hypocycloid: Both `p` and `q` must be positive integers \
+                [ERROR] Hypocycloid: Both `p` and `q` must be positive integers. \
             ")
         
         k = self.p/self.q
@@ -480,23 +507,23 @@ def CurvedPolygon(
     v:int = None,
     n:int = 128,
     **kwargs
-):
+) -> Hypocycloid:
     """
-    A curve alike regular polygon, but has rounded edges curved toward its center
+    A curve alike regular polygon, but has rounded edges curved toward its center.
 
     Args:
-        s | size (float): height/width of the geometry
-        v | num_vertex (int): number of corners
-        n | num_dot (int): number of dots consisting of the whole curve
+        s | size (float): height/width of the geometry.
+        v | num_vertex (int): number of corners.
+        n | num_dot (int): number of dots consisting of the whole curve.
     """
     if v < 3 :
         raise ValueError(" \
-            [ERROR] CurvedPolygon: To draw the geometry, at least 3 corners are required \
+            [ERROR] CurvedPolygon: To draw the geometry, at least 3 corners are required. \
         ")
     
     if s <= 0 :
         raise ValueError(" \
-            [ERROR] CurvedPolygon: The size of the geometry must be greater than 0 \
+            [ERROR] CurvedPolygon: The size of the geometry must be greater than 0. \
         ")
 
     return Hypocycloid(v, 1, s, n, **kwargs)
@@ -511,15 +538,15 @@ class Lissajous(Curve2D):
         s:int = None,
         n:int = 128,
         **kwargs
-    ):
+    ) -> None:
         """
         A curve describe the superposition of two perpendicular oscillations
-        in x and y directions of different angular frequency (a and b)
+        in x and y directions of different angular frequency (a and b).
 
         Args:
-            a, b (int) : frequencies of the vertical and horizontal sinusoidal inputs
-            s | size (float): the height/width of the geometry
-            n | num_dot (int): number of dots consisting of the curve
+            a, b (int) : frequencies of the vertical and horizontal sinusoidal inputs.
+            s | size (float): the height/width of the geometry.
+            n | num_dot (int): number of dots consisting of the curve.
         """
         self.a, self.b, self.uS, self.nD = a, b, s, n
 

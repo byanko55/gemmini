@@ -16,9 +16,9 @@ def test_polygon():
 def test_basic_polygon():
     fa = RegularPolygon(6, num_vertex=5)
     fb = Parallelogram(h=5, w=8, n=24)
-    fc = Parallelogram(9, 6, n=[5, 10, 5, 10], angle=pi/4)
+    fc = Parallelogram(size=(9, 6), n=[5, 10, 5, 10], angle=pi/4)
     fd = Rhombus(h=6, w=10)
-    fe = Rhombus(h=8, w=8, num_dot=[6,12,12,6])
+    fe = Rhombus(s=8, num_dot=[6,12,12,6])
 
     canva = Canvas()
     canva.add(fa)
@@ -31,8 +31,8 @@ def test_basic_polygon():
 
 def test_triangle():
     fa = RegularPolygon(6, num_vertex=3)
-    fb = IsoscelesTriangle(h=7, w=5)
-    fc = RightTriangle(h=5, w=9)
+    fb = IsoscelesTriangle(size=(7, 5))
+    fc = RightTriangle(size=(5, 9))
 
     canva = Canvas()
 
@@ -58,7 +58,7 @@ def test_trapezoid():
 
 def test_rectangle():
     fa = Rectangle(h=8, w=6, n=40)
-    fb = Rectangle(h=8, w=6, n=[10, 8, 12, 6])
+    fb = Rectangle(s=(8,6), n=[10, 8, 12, 6])
 
     canva = Canvas()
     fb.translateY(10)
@@ -66,8 +66,8 @@ def test_rectangle():
     canva.plot()
 
 def test_other_polygon():
-    fa = Kite(5, 10)
-    fb = ConcaveKite(5, 10)
+    fa = Kite(s=(10, 8))
+    fb = ConcaveKite(h=10, w=8)
     fc = ConcaveStar(s=9, num_vertex=5, num_dot=7)
 
     canva = Canvas()

@@ -108,11 +108,12 @@ class RegularPolygon(Polygon2D):
     
     
 class IsoscelesTriangle(Polygon2D):
-    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
-        h:float = None,
-        w:float = None,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
         n:Union[int, Tuple[int, int, int]] = 27,
         **kwargs
     ) -> None:
@@ -120,6 +121,10 @@ class IsoscelesTriangle(Polygon2D):
         A triangle that has two sides of equal length.
 
         Args:
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
             h | height (float): height of triangle.
             w | width (float): base length of the triangle.
             n | num_dot (int | tuple): number of dots consisting of each edge.
@@ -130,10 +135,22 @@ class IsoscelesTriangle(Polygon2D):
         """
         self.h, self.w, self.nD = h, w, n
         
+        if isNumber(s) and s != -1:
+            self.h, self.w = map(int, [s]*2)
+            
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] IsoscelesTriangle: Argument `size` must be either a single number \
+                    or a pair of numbers. \
+                ")
+                
+            self.h, self.w = s[0], s[1]
+        
         if isNumber(n):
-            _s = w + 2*sqrt(h**2 + (w/2)**2)
+            _s = self.w + 2*sqrt(self.h**2 + (self.w/2)**2)
             _nD = n + 3
-            nD_l = int(_nD * sqrt(h**2 + (w/2)**2)/_s)
+            nD_l = int(_nD * sqrt(self.h**2 + (self.w/2)**2)/_s)
             self.nD = [nD_l, nD_l, _nD - 2*nD_l]
             
         if not isNumberArray(self.nD) or len(self.nD) != 3:
@@ -176,11 +193,12 @@ class IsoscelesTriangle(Polygon2D):
         
 
 class RightTriangle(Polygon2D):
-    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
-        h:float = None,
-        w:float = None,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
         n:Union[int, Tuple[int, int, int]] = 27,
         **kwargs
     ) -> None:
@@ -188,6 +206,10 @@ class RightTriangle(Polygon2D):
         A triangle that has one of its interior angles measuring 90°.
 
         Args:
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
             h | height (float): height of triangle.
             w | width (float): base length of the triangle.
             n | num_dot (int | tuple): number of dots consisting of each edge.
@@ -198,11 +220,23 @@ class RightTriangle(Polygon2D):
         """
         self.h, self.w, self.nD = h, w, n
         
+        if isNumber(s) and s != -1:
+            self.h, self.w = map(int, [s]*2)
+            
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] RightTriangle: Argument `size` must be either a single number \
+                    or a pair of numbers. \
+                ")
+                
+            self.h, self.w = s[0], s[1]
+        
         if isNumber(n):
-            _s = w + h + sqrt(h**2 + w**2)
+            _s = self.w + self.h + sqrt(self.h**2 + self.w**2)
             _nD = n + 3
-            nD_v = int(_nD * h/_s)
-            nD_h = int(_nD * w/_s)
+            nD_v = int(_nD * self.h/_s)
+            nD_h = int(_nD * self.w/_s)
             self.nD = [nD_v, _nD - nD_v - nD_h, nD_h]
             
         if not isNumberArray(self.nD) or len(self.nD) != 3:
@@ -245,11 +279,12 @@ class RightTriangle(Polygon2D):
 
 
 class Parallelogram(Polygon2D):
-    @geminit({'height':'h', 'width':'w', 'num_dot':'n', 'angle':'a'})
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n', 'angle':'a'})
     def __init__(
         self,
-        h:float = None,
-        w:float = None,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
         n:Union[int, Tuple[int, int, int, int]] = 32,
         a:float = pi/3,
         **kwargs
@@ -258,6 +293,10 @@ class Parallelogram(Polygon2D):
         A quadrilateral which is made up of 2 pairs of parallel sides.
 
         Args:
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
             h | height (float): height of the geometry.
             w | width (float): length of base (horizontal edge).
             n | num_dot (int | tuple): number of dots consisting of each side.
@@ -269,16 +308,28 @@ class Parallelogram(Polygon2D):
         """
         self.h, self.w, self.nD, self.aG = h, w, n, a
         
+        if isNumber(s) and s != -1:
+            self.h, self.w = map(int, [s]*2)
+            
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] Parallelogram: Argument `size` must be either a single number \
+                    or a pair of numbers. \
+                ")
+                
+            self.h, self.w = s[0], s[1]
+        
         if self.aG <= 0 or self.aG >= pi:
             raise ValueError(" \
                 [ERROR] Parallelogram: The argument `angle` must be in range (0, π). \
             ")
         
         if isNumber(n):
-            _s = 2*w + 2*h/sin(a)
+            _s = 2*self.w + 2*self.h/sin(a)
             _nD = n + 4
-            nD_tb = int(_nD * w/_s)
-            nD_lr = int(_nD * (h/sin(a))/_s)
+            nD_tb = int(_nD * self.w/_s)
+            nD_lr = int(_nD * (self.h/sin(self.aG))/_s)
             self.nD = [nD_tb, nD_lr, nD_tb, _nD - 2*nD_tb - nD_lr]
             
         if not isNumberArray(self.nD) or len(self.nD) != 4:
@@ -326,11 +377,12 @@ class Parallelogram(Polygon2D):
     
     
 class Rhombus(Polygon2D):
-    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
-        h:float = None,
-        w:float = None,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
         n:Union[int, Tuple[int, int, int, int]] = 32,
         **kwargs
     ) -> None:
@@ -338,6 +390,10 @@ class Rhombus(Polygon2D):
         A quadrilateral whose four sides all have the same length.
 
         Args:
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
             h | height (float): length of vertical diagonals.
             w | width (float): length of horizontal diagonals.
             n | num_dot (int | tuple): number of dots consisting of each side.
@@ -347,6 +403,18 @@ class Rhombus(Polygon2D):
                 ex) num_dot = (7,8,9,10): (top_right=7, bottom_right=8, bottom_left=9, top_left=10)
         """
         self.h, self.w, self.nD = h, w, n
+        
+        if isNumber(s) and s != -1:
+            self.h, self.w = map(int, [s]*2)
+            
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] Rhombus: Argument `size` must be either a single number \
+                    or a pair of numbers. \
+                ")
+                
+            self.h, self.w = s[0], s[1]
 
         if isNumber(n):
             _nD = n + 4
@@ -530,11 +598,12 @@ def RightTrapezoid(
     
 
 class Rectangle(Polygon2D):
-    @geminit({'height':'h', 'width':'w', 'num_dot':'n'})
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
-        h:float = None,
-        w:float = None,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
         n:Union[int, Tuple[int, int, int, int]] = 32,
         **kwargs
     ) -> None:
@@ -542,6 +611,10 @@ class Rectangle(Polygon2D):
         A four-sided polygon with four right angles.
         
         Args:
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
             h | height (float): length of vertical sides.
             w | width (float): length of horizontal sides.
             n | num_dot (int | tuple): number of dots consisting of each side.
@@ -551,12 +624,24 @@ class Rectangle(Polygon2D):
                 ex) num_dot = (7,8,9,10): #dots on top/right/bottom/left side = 7/8/9/10
         """
         self.h, self.w, self.nD = h, w, n
+        
+        if isNumber(s) and s != -1:
+            self.h, self.w = map(int, [s]*2)
+            
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] Rectangle: Argument `size` must be either a single number \
+                    or a pair of numbers. \
+                ")
+                
+            self.h, self.w = s[0], s[1]
 
         if isNumber(n):
-            _s = 2*w + 2*h
+            _s = 2*self.w + 2*self.h
             _nD = n + 4
-            nD_tb = int(_nD * w/_s)
-            nD_lr = int(_nD * h/_s)
+            nD_tb = int(_nD * self.w/_s)
+            nD_lr = int(_nD * self.h/_s)
             self.nD = [nD_tb, nD_lr, nD_tb, _nD - 2*nD_tb - nD_lr]
             
         if not isNumberArray(self.nD) or len(self.nD) != 4:
@@ -604,11 +689,12 @@ class Rectangle(Polygon2D):
 
 
 class Kite(Polygon2D):
-    @geminit({'num_dot':'n'})
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
-        a:float,
-        b:float,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
         n:Union[int, Tuple[int, int, int, int]] = 32,
         **kwargs
     ) -> None:
@@ -616,21 +702,46 @@ class Kite(Polygon2D):
         A quadrilateral with reflection symmetry across a diagonal.
 
         Args:
-            a (float): length of top-left/top-right side.
-            b (float): length of bottom-left/bottom-right side.
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
+            h | height (float): length of vertical sides.
+            w | width (float): length of horizontal sides.
             n | num_dot (int | tuple): number of dots consisting of each side.
                 If a numeric value is given, then the geometry includes `n` dots on its circumference.
                 Or, you can determine the number of dots on each sides respectively,
                 by giving a tuple for the `num_dot` argument.
                 ex) num_dot = (7,8,9,10): (top_right=7, bottom_right=8, bottom_left=9, top_left=10)
         """
-        self.a, self.b, self.nD = a, b, n
+        self.h, self.w, self.nD = h, w, n
+        
+        if isNumber(s) and s != -1:
+            self.h, self.w = map(int, [s]*2)
+            
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] Kite: Argument `size` must be either a single number \
+                    or a pair of numbers. \
+                ")
+                
+            self.h, self.w = s[0], s[1]
+            
+        if self.h <= self.w :
+            raise ValueError(" \
+                [ERROR] Kite: The width of Kite can't be larger than its height. \
+            ")
+            
+        _c = sqrt(1 - (self.w**2)/(self.h**2))
+        self.a = self.h * sqrt(2*(1 - _c))/2
+        self.b = self.w/(sqrt(2 * (1 - _c)))
 
         if isNumber(n):
-            _s = 2*(a+b)
+            _s = 2*(self.a+self.b)
             _nD = n + 4
-            nD_t = int(_nD*a/_s)
-            nD_b = int(_nD*b/_s)
+            nD_t = int(_nD*self.a/_s)
+            nD_b = int(_nD*self.b/_s)
             self.nD = [nD_t, nD_b, nD_b, _nD - 2*nD_b - nD_t]
             
         if not isNumberArray(self.nD) or len(self.nD) != 4:
@@ -685,11 +796,12 @@ class Kite(Polygon2D):
     
     
 class ConcaveKite(Polygon2D):
-    @geminit({'num_dot':'n'})
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
-        a:float,
-        b:float,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
         n:Union[int, Tuple[int, int, int, int]] = 32,
         **kwargs
     ) -> None:
@@ -697,21 +809,47 @@ class ConcaveKite(Polygon2D):
         A Kite shape, but the line through one of the diagonals bisects the other.
 
         Args:
-            a (float): length of top-left/top-right side.
-            b (float): length of bottom-left/bottom-right side.
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
+            h | height (float): length of vertical sides.
+            w | width (float): length of horizontal sides.
             n | num_dot (int | tuple): number of dots consisting of each side.
                 If a numeric value is given, then the geometry includes `n` dots on its circumference.
                 Or, you can determine the number of dots on each sides respectively,
                 by giving a tuple for the `num_dot` argument.
                 ex) num_dot = (7,8,9,10): (top_right=7, bottom_right=8, bottom_left=9, top_left=10)
         """
-        self.a, self.b, self.nD = a, b, n
+        self.h, self.w, self.nD = h, w, n
+        
+        if isNumber(s) and s != -1:
+            self.h, self.w = map(int, [s]*2)
+            
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] Kite: Argument `size` must be either a single number \
+                    or a pair of numbers. \
+                ")
+                
+            self.h, self.w = s[0], s[1]
+        
+        if self.h <= self.w :
+            raise ValueError(" \
+                [ERROR] ConcaveKite: The width of Kite can't be larger than its height. \
+            ")
+            
+        _c = 2*self.h/sqrt(self.w**2 + 4*self.h**2)
+        _s = sqrt(1 - _c**2)
+        self.a = self.h*_s/(_c**2)
+        self.b = self.h/_c
 
         if isNumber(n):
-            _s = 2*(a+b)
+            _s = 2*(self.a+self.b)
             _nD = n + 4
-            nD_t = int(_nD*a/_s)
-            nD_b = int(_nD*b/_s)
+            nD_t = int(_nD*self.a/_s)
+            nD_b = int(_nD*self.b/_s)
             self.nD = [nD_t, nD_b, nD_b, _nD - 2*nD_b - nD_t]
             
         if not isNumberArray(self.nD) or len(self.nD) != 4:

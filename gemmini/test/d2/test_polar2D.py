@@ -7,14 +7,16 @@ import pytest
 def test_circle():
     fa = Circle(r=5)
     fb = Arc(r=4, angle=3*pi/4, n=16)
-    fc = Ellipse(4, 8, 48)
+    fc = Ellipse(size=(4, 8), n=48)
+    fd = Ellipse(height=8, width=4, n=48)
 
-    fa.translate(0, -10)
-    fb.translate(5, 5)
-    fc.translate(-5, 5)
+    fa.translate(0, -8)
+    fb.translate(8, 0)
+    fc.translate(-8, 0)
+    fd.translate(0, 8)
 
     canva = Canvas()
-    canva.add((fa, fb, fc))
+    canva.add((fa, fb, fc, fd))
     canva.plot()
 
 def test_spiral_1():
@@ -33,16 +35,20 @@ def test_spiral_1():
     canva.plot()
 
 def test_spiral_2():
-    fa = HyperbolicSpiral(10, 3*pi, 20)
-    fb = LogarithmicSpiral(10, 3*pi, 20)
-
-    fa.translateX(5)
+    fa = HyperbolicSpiral(10, 4*pi, n=64)
 
     canva = Canvas()
-    canva.add((fa, fb))
+    canva.add(fa)
+    canva.plot()  
+    
+def test_spiral_3():
+    fa = LogarithmicSpiral(10, 2*pi)
+
+    canva = Canvas()
+    canva.add(fa)
     canva.plot()  
 
-def test_spiral_3():
+def test_spiral_4():
     f = BoundedSpiral(10, 8*pi, 256)
 
     canva = Canvas()
@@ -84,6 +90,7 @@ if __name__ == "__main__":
     test_spiral_1()
     test_spiral_2()
     test_spiral_3()
+    test_spiral_4()
     test_cycloid_1()
     test_cycloid_2()
     test_others()
