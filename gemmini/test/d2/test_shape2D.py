@@ -104,7 +104,7 @@ def test_shape_6():
     canva.plot()
     
 def test_flower():
-    canva = Canvas(scale=0.5)
+    canva = Canvas()
 
     fa = Flower_A(s=8)
     fb = Flower_B(s=8)
@@ -125,7 +125,7 @@ def test_flower():
     canva.plot()
     
 def test_shape_7():
-    canva = Canvas(scale=0.5)
+    canva = Canvas()
 
     fa = FattyStar(s=6)
     fb = FattyStar(s=6, v=6)
@@ -146,7 +146,7 @@ def test_shape_7():
     canva.plot()
     
 def test_polygon_tile():
-    canva = Canvas(scale=0.5)
+    canva = Canvas()
 
     fa = Polygontile(s=4, v=4)
     fb = Polygontile(s=4, v=5)
@@ -246,7 +246,7 @@ def test_cross_1():
     canva.plot()
     
 def test_cross_2():
-    canva = Canvas(scale=0.5)
+    canva = Canvas()
     
     fa = SunCross(s=8)
     fb = BasqueCross(s=8)
@@ -296,6 +296,17 @@ def test_arrow():
         
     canva.plot()
     
+def test_shape_10():
+    canva = Canvas()
+    
+    fg = Clover(s=8, num_leaves=3)
+    
+    for i, f in enumerate([fg]):
+        f.translate(9*i, 0)
+        canva.add(f)
+        
+    canva.plot()
+    
 
 if __name__ == "__main__":
     test_shape_1()
@@ -314,3 +325,4 @@ if __name__ == "__main__":
     test_cross_2()
     test_shape_9()
     test_arrow()
+    test_shape_10()

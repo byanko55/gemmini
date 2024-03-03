@@ -859,8 +859,8 @@ def Flower_E(s:float = None, n:int = 128, nL:int = 6, **kwargs) -> _Flower:
     """
     def func(uS, nD, nL):
         theta = np.linspace(0, 2*np.pi, nD+1)[:-1]
-        rx = 2*np.cos(2*theta) + np.cos(2*(1 + nL)*theta)
-        ry = 2*np.sin(2*theta) + np.sin(2*(1 + nL)*theta)
+        rx = 2*np.cos(2*theta) + np.cos((1 + nL)*theta)
+        ry = 2*np.sin(2*theta) + np.sin((1 + nL)*theta)
         
         coord = np.stack((rx, ry), axis=1)*uS/3
         
@@ -888,6 +888,50 @@ def Flower_F(s:float = None, n:int = 128, nL:int = 6, **kwargs) -> _Flower:
         return coord
     
     return _Flower(func, 'Flower_F', s, n, nL, **kwargs)
+    
+    
+class Clover(Geometry2D):
+    @geminit({'size':'s', 'num_leaves':'nL', 'num_dot':'n'})
+    def __init__(
+        self,
+        s:float = None,
+        nL:int = 4,
+        n:int = 128,
+        **kwargs
+    ) -> None:
+        """
+        Clover leaf shape.
+
+        Args:
+            s | size (float): scale of the geometry.
+            nL | num_leaves (int): number of floral leaves.
+            n | num_dot (int): number of dots consisting of its circumference.
+        """
+        self.uS, self.nV, self.nD = s, nL, n
+        
+        if self.nV < 3 :
+            raise ValueError(" \
+                [ERROR] Clover: Requires at least 3 leaves. \
+            ")
+    
+        super().__init__(
+            planar=True,
+            **kwargs
+        )
+        
+    def _base_coords(self) -> np.ndarray:
+        theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
+        rad = 1 + np.cos(self.nV*theta) + np.power(np.sin(self.nV*theta), 2)
+        rad = (self.uS/2)*rad/3
+        
+        coord = to_cartesian(rad, theta)
+        return coord
+
+    def __len__(self) -> int:
+        return self.nD
+    
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.uS, self.nV, self.nD))
     
 
 class FattyStar(Geometry2D):
