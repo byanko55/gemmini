@@ -206,3 +206,27 @@ def rotate_2D(xy:COORDINATES, theta:float) -> COORDINATES:
     m = np.dot(xy, r)
 
     return m
+
+
+def gradient(p:Tuple[float, float], q:Tuple[float, float], radian:bool = False) -> float:
+    """
+    Returns the gradient of a line connecting given two points.
+
+    Args:
+        p, q (tuple): the coordinates of that point.
+        radian (bool): if True, the gradient is measured in radian.
+    """
+    if not (isPoint(p) and isPoint(q)):
+        raise ValueError(" \
+            [ERROR] gradient: Tried to give input that can't be represented as a cartesian point. \
+        ")
+    
+    if p[0] == q[0]:
+        if radian:
+            return pi/2 if q[1] > p[1] else 3*pi/2
+        
+        return inf
+    
+    g = (q[1]-p[1])/(p[1]-p[0])
+    
+    return atan(g) if radian else g
