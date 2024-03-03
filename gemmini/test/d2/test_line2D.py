@@ -26,7 +26,7 @@ def test_line2D_2():
     assert c.orthog(e)
 
 def test_line2D_3():
-    canva = Canvas()
+    canva = Canvas(scale=1.5)
 
     a = Line2D((1,0), slope=1.5)
     b = Line2D((-1,0), (0,2))
@@ -74,8 +74,8 @@ def test_line_with_gem():
     canva = Canvas()
     a = Line2D((0, 0), slope=1.5)
 
-    ga = RegularPolygon(s=10, nD=6, nV=6)
-    gb = RegularPolygon(s=10, nD=6, nV=4)
+    ga = RegularPolygon(s=10, n=6, v=6)
+    gb = RegularPolygon(s=10, n=6, v=4)
     gb.translate(-8, 4)
 
     assert len(a.intersect(ga)) == 2

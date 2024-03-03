@@ -33,7 +33,8 @@ class Canvas:
         scale:float = 1.0,
         draw_grid:bool = True,
         major_ticks:bool = True,
-        minor_ticks:bool = True
+        minor_ticks:bool = True,
+        **kwargs
     ) -> None:
         """
         Class for rendering geometric figures on matplotlib canvas.
@@ -95,19 +96,24 @@ class Canvas:
                     s = g_config['opt_s'],
                     c = g_config['opt_c'],
                     marker = g_config['opt_m'],
-                    zorder= g_config['zorder']
+                    zorder = g_config['zorder']
                 )
 
                 # Display centroid
                 if g_config['opt_dc']:
                     xc, yc = gem.center()
+                    plt.scatter(
+                        [xc], [yc], c = self.theme['dotcolor'], zorder = g_config['zorder'] + 1
+                    )
+                    
                     plt.text(
                         xc, 
                         yc + canvas_size/25,
                         "(%.2f, %.2f)"%(xc, yc),
-                        bbox=dict(facecolor=self.theme['facecolor'], alpha=0.5, edgecolor='none'),
+                        bbox=dict(facecolor=self.theme['facecolor'], alpha=0.7, edgecolor='none'),
                         ha='center',
-                        va='center'
+                        va='center',
+                        weight='bold'
                     )
                     
                 # Display radius
@@ -132,9 +138,10 @@ class Canvas:
                         (xc + _c[p][0])/2 + cos(_g + 3*pi/2) * canvas_size/10,
                         (yc + _c[p][1])/2 + sin(_g + 3*pi/2) * canvas_size/30, 
                         "%s = %.2f"%('r' if isinstance(gem, Curve2D) else 'd', max_d),
-                        bbox=dict(facecolor=self.theme['facecolor'], alpha=0.5, edgecolor='none'),
+                        bbox=dict(facecolor=self.theme['facecolor'], alpha=0.7, edgecolor='none'),
                         ha='center',
-                        va='center'
+                        va='center',
+                        weight='bold'
                     )
                     
                 # Display edges
@@ -168,55 +175,57 @@ class Canvas:
                     x_min, y_min, x_max, y_max = gem.bounding_box()
                     
                     plt.plot(
-                        [x_min - canvas_size/150, x_max + canvas_size/150], 
-                        [y_max + 2*canvas_size/75, y_max + 2*canvas_size/75], 
+                        [x_min - canvas_size/128, x_max + canvas_size/128], 
+                        [y_max + canvas_size/32, y_max + canvas_size/32], 
                         c=self.theme['edgecolor']
                     )
                     
                     plt.plot(
-                        [x_min - canvas_size/150, x_min - canvas_size/150], 
-                        [y_max + canvas_size/75, y_max + canvas_size/25], 
+                        [x_min - canvas_size/128, x_min - canvas_size/128], 
+                        [y_max + canvas_size/64, y_max + 3*canvas_size/64], 
                         c=self.theme['edgecolor']
                     )
                     
                     plt.plot(
-                        [x_max + canvas_size/150, x_max + canvas_size/150], 
-                        [y_max + canvas_size/75, y_max + canvas_size/25], 
+                        [x_max + canvas_size/128, x_max + canvas_size/128], 
+                        [y_max + canvas_size/64, y_max + 3*canvas_size/64], 
                         c=self.theme['edgecolor']
                     )
                     
                     plt.text(
                         (x_min + x_max)/2,
-                        y_max + canvas_size/20,
+                        y_max + 3*canvas_size/64,
                         "%.2f"%(x_max-x_min),
-                        bbox=dict(facecolor=self.theme['facecolor'], alpha=0.5, edgecolor='none'),
+                        bbox=dict(facecolor=self.theme['facecolor'], alpha=0.6, edgecolor='none'),
                         ha='center',
+                        weight='bold'
                     )
                     
                     plt.plot(
-                        [x_max + 2*canvas_size/75, x_max + 2*canvas_size/75], 
-                        [y_min - canvas_size/150, y_max + canvas_size/150], 
+                        [x_max + canvas_size/32, x_max + canvas_size/32], 
+                        [y_min - canvas_size/128, y_max + canvas_size/128], 
                         c=self.theme['edgecolor']
                     )
                     
                     plt.plot(
-                        [x_max + canvas_size/75, x_max + canvas_size/25], 
-                        [y_min - canvas_size/150, y_min - canvas_size/150], 
+                        [x_max + canvas_size/64, x_max + 3*canvas_size/64], 
+                        [y_min - canvas_size/128, y_min - canvas_size/128], 
                         c=self.theme['edgecolor']
                     )
                     
                     plt.plot(
-                        [x_max + canvas_size/75, x_max + canvas_size/25], 
-                        [y_max + canvas_size/150, y_max + canvas_size/150], 
+                        [x_max + canvas_size/64, x_max + 3*canvas_size/64], 
+                        [y_max + canvas_size/128, y_max + canvas_size/128], 
                         c=self.theme['edgecolor']
                     )
                     
                     plt.text(
-                        x_max + canvas_size/25, 
+                        x_max + 3*canvas_size/64, 
                         (y_min + y_max)/2,
                         "%.2f"%(y_max-y_min),
-                        bbox=dict(facecolor=self.theme['facecolor'], alpha=0.5, edgecolor='none'),
-                        va='center'
+                        bbox=dict(facecolor=self.theme['facecolor'], alpha=0.6, edgecolor='none'),
+                        va='center',
+                        weight='bold'
                     )
 
         plt.show()
@@ -227,8 +236,13 @@ class Canvas:
 
         for g_config in gem_configs:
             g = g_config['fig']
-
+            
             if isinstance(g, Line2D):
+                if box_size == 0:
+                    cx, cy = g.p1
+                    box_size = 1
+                    continue
+                
                 ox, oy = g.orthog_point((cx, cy))
                 ncx, ncy, nbx, nby = cx, cy, box_size, box_size 
 
@@ -250,6 +264,9 @@ class Canvas:
 
                 cx, cy, box_size = ncx, ncy, max(nbx, nby)
             else :
+                if box_size == 0:
+                    cx, cy = g.center()
+                
                 x_min, y_min, x_max, y_max = g.bounding_box()
 
                 ncx = (min(x_min, cx-box_size) + max(x_max, cx + box_size))/2
@@ -287,7 +304,7 @@ class Canvas:
             ax.set_yticks(np.linspace(mtick_bb, mtick_tb, int((mtick_tb-mtick_bb)//(_tu/2) + 1)), minor=True)
 
         if self.draw_grid:
-            ax.grid(which='both', color='#BDBDBD', linestyle='--', linewidth=1)
+            ax.grid(which='both', color='#BDBDBD', linestyle='--', linewidth=1, zorder=-1)
         else :
             plt.tick_params(left = False, right = False, labelleft = False, 
                 labelbottom = False, bottom = False)
@@ -305,7 +322,8 @@ class Canvas:
         dot_size:int = 25,
         dot_style:str = 'o',
         display_coord:bool = True,
-        zorder:int = 1
+        zorder:int = 2,
+        **kwargs
     ):
         """
         Reserve a given Geometry2D object for drawing it on canvas.
@@ -345,7 +363,8 @@ class Canvas:
         draw_radius:bool = False,
         draw_dimension:bool = False,
         draw_center:bool = False,
-        zorder:int = 0
+        zorder:int = 1,
+        **kwargs
     ):
         """
         Reserve a given Geometry2D object for drawing it on canvas.
@@ -391,7 +410,8 @@ class Canvas:
         line_color:str = None,
         line_width:int = 2,
         line_style:str = '-',
-        zorder:int = 0,
+        zorder:int = 1,
+        **kwargs
     ):
         """
         Reserve a given Line2D object for drawing it on canvas.

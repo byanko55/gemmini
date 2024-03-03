@@ -21,7 +21,9 @@ from gemmini.d2.polar2D import (
     Epicycloid,
     Hypocycloid,
     CurvedPolygon,
-    Lissajous
+    Lissajous,
+    Folium,
+    Bifolium
 )
 from gemmini.d2.polygon2D import (
     Polygon2D,
@@ -57,6 +59,7 @@ from gemmini.d2.shape2D import (
     Flower_D,
     Flower_E,
     Flower_F,
+    Clover,
     FattyStar,
     Moon,
     Yinyang,

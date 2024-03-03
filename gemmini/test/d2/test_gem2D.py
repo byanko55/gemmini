@@ -1,5 +1,5 @@
 from gemmini.misc import *
-from gemmini.plot import *
+from gemmini.canvas import plot
 from gemmini.d2.point2D import Pointcloud2D
 from gemmini.d2.polygon2D import ConcaveStar
 from gemmini.d2._gem2D import *
@@ -18,67 +18,67 @@ if __name__ == "__main__":
     f = ori.copy()
     f.scale(1.5)
     print("Scale: 1.5")
-    plot(f)
+    plot(f, draw_dimension=True)
     
     f = ori.copy()
     f.scale(2, 3)
     print("Scale: x=2, y=3")
-    plot(f)
+    plot(f, draw_dimension=True)
     
     f = ori.copy()
     f.scaleX(3)
     print("ScaleX: 3")
-    plot(f)
+    plot(f, draw_dimension=True)
     
     f = ori.copy()
     f.scaleY(2.5)
     print("ScaleY: 2.5")
-    plot(f)
+    plot(f, draw_dimension=True)
     
     f = ori.copy()
     f.translate(mx=5, my=-25)
     print("Translate: mx=5, my=-25")
-    plot(f)
+    plot(f, draw_center=True)
     
     f = ori.copy()
     f.translateX(mx=5)
     print("TranslateX: mx=5")
-    plot(f)
+    plot(f, draw_center=True)
     
     f = ori.copy()
     f.translateY(my=25)
     print("TranslateY: 25")
-    plot(f)
+    plot(f, draw_center=True)
     
     f = ori.copy()
     f.rotate(a=pi/6)
     print("Rotate: pi/6")
-    plot(f)
+    plot(f, draw_radius=True)
     
     f = ori.copy()
     f.rotateX(a=pi/6)
     print("RotateX: pi/6")
-    plot(f)
+    plot(f, draw_radius=True)
     
     f = ori.copy()
     f.rotateY(a=pi/6)
     print("RotateY: pi/6")
-    plot(f)
+    plot(f, draw_radius=True)
     
     f = ori.copy()
     f.rotateZ(a=pi/6)
     print("RotateZ: pi/6")
-    plot(f)
+    plot(f, draw_radius=True)
     
     f = ori.copy()
     f.rotate3D(yaw=pi/6, pitch=pi/3, roll=0)
     print("Rotate3D: yaw:pi/6, pitch:pi/3")
-    plot(f)
+    plot(f, draw_radius=True)
     
     f = ori.copy()
     f.rotate3D(pi/6, 0, -pi/4)
     print("Rotate3D: yaw:pi/6, roll:-pi/4")
-    plot(f)
+    plot(f, draw_radius=True)
     
     f = ori.copy()
     f.skew(pi/6)
@@ -134,33 +134,35 @@ if __name__ == "__main__":
     print("ReflectDiagonal")
     plot(f)
     
+    f = ori.copy()
+    f.translate(20, -30)
     f.flip(p=[-15, 10])
     print("Flip: [-15, 10]")
-    plot(f)
+    plot(f, draw_center=True)
     
     f = ori.copy()
     f.translate(20, -30)
     f.flipX()
     print("FlipX")
-    plot(f)
+    plot(f, draw_center=True)
     
     f = ori.copy()
     f.translate(20, -30)
     f.flipY()
     print("FlipY")
-    plot(f)
+    plot(f, draw_center=True)
     
     f = ori.copy()
     f.translate(20, -30)
     f.flipXY()
     print("FlipXY")
-    plot(f)
+    plot(f, draw_center=True)
     
     f = ori.copy()
     f.translate(20, -30)
     f.flipDiagonal()
     print("FlipDiagonal")
-    plot(f)
+    plot(f, draw_center=True)
     
     f = ori.copy()
     f.dot(m=np.array([[1, 0.5], [-0.5, -2]]))
@@ -206,13 +208,13 @@ if __name__ == "__main__":
     print("Original Star")
     plot(f)
     f.translate(5, 10)
-    plot(f)
+    plot(f, draw_center=True)
     f.flipXY()
-    plot(f)
+    plot(f, draw_center=True)
     f.translate(5, 5)
-    plot(f)
+    plot(f, draw_center=True)
     f.rotate(pi/6)
-    plot(f)
+    plot(f, draw_radius=True)
     
     f = ConcaveStar(s=10, nD=6, nV=5)
     print("At all")
@@ -221,17 +223,3 @@ if __name__ == "__main__":
     f.translate(5, 5)
     f.rotate(pi/6)
     plot(f)
-
-    """
-    fa = Circle(r=2, nD=48)
-    fa.fill()
-    fb = fa.copy()
-    fb.translateX(1.5)
-    print("Figure: Circle")
-    
-    f = union((fa, fb))
-    plot(f)
-    
-    f = intersect((fa, fb))
-    plot(f)
-    """

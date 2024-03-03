@@ -1,8 +1,10 @@
 import inspect
 import warnings
+import itertools
+
 import numpy as np
 from typing import Callable, Any, List, Optional, Tuple, Union
-from math import sqrt, cos, sin, tan, pi, inf, ceil, exp, log, log10
+from math import sqrt, cos, sin, tan, atan, pi, inf, ceil, floor, exp, log, log10
 
 COORDINATES = Union[Tuple, List, np.ndarray]
 
@@ -125,7 +127,7 @@ def inspect_args(func, aliases, error_tag, *args, **kwargs):
             continue
 
         raise ValueError(" \
-            [Error] %s: Argument `%s` is missing \
+            [ERROR] %s: Argument `%s` is missing \
             "%(error_tag, arg_names[i])
         )
     
@@ -155,6 +157,33 @@ def geminit(aliases={}):
     return decorator
 
 
+def _convert_tuple(a):
+    if isinstance(a, list):
+        if isinstance(a[0], list):
+            return tuple(itertools.chain(*a))
+        
+        return tuple(a)
+    
+    if isinstance(a, np.ndarray):
+        if len(a.shape) != 1:
+            return tuple(a.flatten().tolist())
+        
+        return tuple(a.tolist())
+
+    return a
+
+def get_hash(*args, **kwargs):
+    base = []
+    
+    for arg in args:
+        base.append(_convert_tuple(arg))
+        
+    for k, v in kwargs.items():
+        _v = _convert_tuple(v)
+        base.append((k, _v))
+        
+    return hash(tuple(base))
+
 def assignArg(gem_type:str, list_abbrs:List[Any], list_full_names:List[str], kwargs):
     res = []
     
@@ -169,7 +198,7 @@ def assignArg(gem_type:str, list_abbrs:List[Any], list_full_names:List[str], kwa
 
                 if arg_name != '':
                     raise ValueError(" \
-                        [ERROR] %s: you can't pass the both `%s` and `%s` arguments' \
+                        [ERROR] %s: you can't pass the both `%s` and `%s` arguments. \
                         "%(gem_type, arg_name, _s)
                     )
             
@@ -178,12 +207,16 @@ def assignArg(gem_type:str, list_abbrs:List[Any], list_full_names:List[str], kwa
             arg_name = full_name
 
         if type(abbr) != type(None) and arg_name != '':
-            raise ValueError("[ERROR] %s: same flag used two times"%(gem_type))
+            raise ValueError(" \
+                [ERROR] %s: same flag used two times. \
+                "%(gem_type)
+            )
         
         if type(abbr) == type(None) and arg_name == '':
             raise ValueError("\
-                [ERROR] %s: '%s' argument was not given \
-            "%(gem_type, full_name if type(full_name) == str else full_name[0]))
+                [ERROR] %s: '%s' argument was not given. \
+                "%(gem_type, full_name if type(full_name) == str else full_name[0])
+            )
         
         v = abbr if type(abbr) != type(None) else kwargs[arg_name]
         res.append(v)
