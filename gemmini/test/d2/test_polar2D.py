@@ -79,10 +79,14 @@ def test_cycloid_2():
 def test_others():
     fa = CurvedPolygon(size=10, num_vertex=5)
     fb = Lissajous(a=3, b=2, size=10)
+    fc = Folium(r=10)
+    fd = Bifolium(r=10)
 
     canva = Canvas()
     fb.translateY(12)
-    canva.add((fa, fb))
+    fc.translateX(12)
+    fd.translate(12, 12)
+    canva.add((fa, fb, fc, fd))
     canva.plot()
 
 if __name__ == "__main__":

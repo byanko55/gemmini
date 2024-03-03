@@ -566,3 +566,69 @@ class Lissajous(Curve2D):
         
     def __hash__(self) -> int:
         return super().__hash__() + hash((self.gem_type, self.a, self.b, self.uS, self.nD))
+    
+    
+class Folium(Curve2D):
+    @geminit({'radius':'r', 'num_dot':'n'})
+    def __init__(
+        self,
+        r:float = None,
+        n:int = 64,
+        **kwargs
+    ) -> None:
+        """
+        The pedal of the deltoid with respect to one of its cuspidal points.
+
+        Args:
+            r | radius (float): radius of the geometry.
+            n | num_dot (int): number of dots consisting of its circumference.
+        """
+        self.rD, self.nD = r, n
+
+        theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
+        rad = self.rD*np.power(np.cos(theta), 3)
+
+        coord = to_cartesian(rad, theta)
+
+        super().__init__(
+            r=self.rD,
+            points=coord,
+            planar=True,
+            **kwargs
+        )
+    
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.rD, self.nD))
+    
+    
+class Bifolium(Curve2D):
+    @geminit({'radius':'r', 'num_dot':'n'})
+    def __init__(
+        self,
+        r:float = None,
+        n:int = 64,
+        **kwargs
+    ) -> None:
+        """
+        A quartic plane curve with equation in Cartesian coordinates: (x² + y²)² = ax²y.
+
+        Args:
+            r | radius (float): radius of the geometry.
+            n | num_dot (int): number of dots consisting of its circumference.
+        """
+        self.rD, self.nD = r, n
+
+        theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
+        rad = self.rD*np.sin(theta)*np.power(np.cos(theta), 2)
+
+        coord = to_cartesian(rad, theta)
+
+        super().__init__(
+            r=self.rD,
+            points=coord,
+            planar=True,
+            **kwargs
+        )
+    
+    def __hash__(self) -> int:
+        return super().__hash__() + hash((self.gem_type, self.rD, self.nD))
