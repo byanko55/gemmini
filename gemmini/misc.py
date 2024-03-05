@@ -8,6 +8,9 @@ from math import sqrt, cos, sin, tan, atan, pi, inf, ceil, floor, exp, log, log1
 
 COORDINATES = Union[Tuple, List, np.ndarray]
 
+linear_seq = lambda *args: list(range(*args))
+linear_ring = lambda *args: linear_seq(*args) + [0 if len(args) == 1 else args[0]]
+
 
 def isNumber(n:Any) -> bool:
     return isinstance(n, (int, float, np.number))
@@ -28,10 +31,6 @@ def isPoint(p:Any, dim:int = None) -> bool:
         return False
     
     if len(p) < 2 or len(p) > 3:
-        warnings.warn(" \
-            [WARN] We do not support dimensions except 2d or 3d \
-        ")
-        
         return False
     
     if dim != None and len(p) != dim:
@@ -69,14 +68,14 @@ def isSame(a:object, b:object, bound=1e-6) -> bool:
             return False
         
         check = [abs(a[i]-b[i]) <= bound for i in range(len(a))]
-        return np.array(check).all()
+        return bool(np.array(check).all())
 
     if isPoint(a) and isPoint(b):
         if len(a) != len(b):
             return False
         
         check = [abs(a[i]-b[i]) <= bound for i in range(len(a))]
-        return np.array(check).all()
+        return bool(np.array(check).all())
 
     if isPointSet(a) and isPointSet(b):
         if len(a) != len(b):
