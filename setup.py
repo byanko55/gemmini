@@ -9,7 +9,7 @@ if __name__ == "__main__":
         author='Yankos',
         author_email='byanko55@gmail.com',
         url='https://github.com/byanko55/gemmini',
-        install_requires=['numpy', 'matplotlib'],
+        install_requires=['numpy', 'matplotlib', 'scipy'],
         packages=find_packages(exclude=[]),
         keywords=['geometry', 'drawing 2D/3D graphic'],
         python_requires='>=3.6',
