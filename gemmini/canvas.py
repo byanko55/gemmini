@@ -178,11 +178,11 @@ class Canvas:
 
             # Display centroid
             if g_config['opt_dc']:
-                self._plot_center(gem, g_config, canvas_size)
+                self._plot_center(gem, canvas_size)
                     
             # Display radius
             if g_config['opt_dr']:
-                self._plot_radius(gem, g_config, canvas_size)
+                self._plot_radius(gem, canvas_size)
 
         plt.show()
 
@@ -209,7 +209,7 @@ class Canvas:
             zorder = g_config['zorder']
         )
 
-    def _plot_center(self, gem:Geometry2D, g_config:dict, canvas_size:float) -> None:
+    def _plot_center(self, gem:Geometry2D, canvas_size:float) -> None:
         xc, yc = gem.center()
 
         plt.scatter(
@@ -224,10 +224,10 @@ class Canvas:
             ha='center',
             va='center',
             weight='bold',
-            zorder = g_config['zorder']
+            zorder = ORDER_MAX
         )
 
-    def _plot_radius(self, gem:Geometry2D, g_config:dict, canvas_size:float) -> None:
+    def _plot_radius(self, gem:Geometry2D, canvas_size:float) -> None:
         xc, yc = gem.center()
         max_d = 0
         p = 0
@@ -252,7 +252,7 @@ class Canvas:
             ha='center',
             va='center',
             weight='bold',
-            zorder = g_config['zorder']
+            zorder = ORDER_MAX
         )
 
     def _plot_edges(self, gem:Geometry2D, g_config:dict) -> None:
@@ -303,19 +303,22 @@ class Canvas:
         plt.plot(
             [x_min - canvas_size/128, x_max + canvas_size/128], 
             [y_max + canvas_size/32, y_max + canvas_size/32], 
-            c=self.theme['edgecolor']
+            c=self.theme['edgecolor'],
+            zorder = ORDER_MAX
         )
         
         plt.plot(
             [x_min - canvas_size/128, x_min - canvas_size/128], 
             [y_max + canvas_size/64, y_max + 3*canvas_size/64], 
-            c=self.theme['edgecolor']
+            c=self.theme['edgecolor'],
+            zorder = ORDER_MAX
         )
         
         plt.plot(
             [x_max + canvas_size/128, x_max + canvas_size/128], 
             [y_max + canvas_size/64, y_max + 3*canvas_size/64], 
-            c=self.theme['edgecolor']
+            c=self.theme['edgecolor'],
+            zorder = ORDER_MAX
         )
         
         plt.text(
@@ -331,19 +334,22 @@ class Canvas:
         plt.plot(
             [x_max + canvas_size/32, x_max + canvas_size/32], 
             [y_min - canvas_size/128, y_max + canvas_size/128], 
-            c=self.theme['edgecolor']
+            c=self.theme['edgecolor'],
+            zorder = ORDER_MAX
         )
         
         plt.plot(
             [x_max + canvas_size/64, x_max + 3*canvas_size/64], 
             [y_min - canvas_size/128, y_min - canvas_size/128], 
-            c=self.theme['edgecolor']
+            c=self.theme['edgecolor'],
+            zorder = ORDER_MAX
         )
         
         plt.plot(
             [x_max + canvas_size/64, x_max + 3*canvas_size/64], 
             [y_max + canvas_size/128, y_max + canvas_size/128], 
-            c=self.theme['edgecolor']
+            c=self.theme['edgecolor'],
+            zorder = ORDER_MAX
         )
         
         plt.text(
@@ -433,7 +439,7 @@ class Canvas:
         self,
         point:Point2D,
         dot_color:str = None,
-        dot_size:int = 25,
+        dot_size:int = 8,
         dot_style:str = 'o',
         display_coord:bool = True,
         zorder:int = 2,
