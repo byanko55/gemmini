@@ -353,8 +353,6 @@ class SymmetricSpiral(Geometry2D):
     def _base_coords(self) -> np.ndarray:
         coord = np.array([[self._draw_blades(j, i) for j in range(self.nD)] for i in range(self.nV)])
         coord = coord.reshape(-1, coord.shape[-1])
-        
-        #idx = [[i*self.nD + j for j in range(self.nD)] for i in range(self.nV)]
 
         return coord
     
@@ -427,18 +425,6 @@ class Star(Geometry2D):
         
         coord.append(_p[:])
         coord = np.concatenate(tuple(coord), axis=0)
-        
-        #eidx = []
-        
-        #for i in range(self.nV):
-        #    for j in range(2*self.nD-3):
-        #        eidx.append(i*(2*self.nD-3) + j)
-        #        
-        #    eidx.append(self.nV*(2*self.nD-3) + (i+1)*(self.nD-1) - 1)
-            
-        #eidx.append(0)
-        
-        #iidx = list(range(self.nV*(2*self.nD-3), self.nV*(3*self.nD-4))) + [self.nV*(2*self.nD-3)]
 
         return coord
     
@@ -1144,16 +1130,7 @@ class Yinyang(Geometry2D):
         c = Circle(r=self.uS/2, n=nD_R)
         
         coord = np.concatenate((c[:], a2[:-1], a1[1:-1]), axis=0)
-        
-        #eidx1 = list(range(nD_R//2))
-        #eidx1.extend(list(reversed(list(range(nD_R, nD_R+nD_r-1)))))
-        #eidx1.extend(list(range(nD_R+nD_r-1, nD_R+2*nD_r-3)))
-        #eidx1.append(0)
-
-        #eidx2 = list(range(nD_R//2, nD_R))
-        #eidx2.extend(list(reversed(list(range(nD_R+nD_r-1, nD_R+2*nD_r-3)))))
-        #eidx2.extend(list(range(nD_R, nD_R+nD_r-1)))
-        #eidx2.append(nD_R//2)
+        coord = rotate_2D(coord, pi/2)
 
         return coord
     
@@ -1216,9 +1193,6 @@ class Polygontile(Geometry2D):
         _fo = RegularPolygon(size=irD, num_dot=self.nD, num_vertex=self.nV)
         coord = []
         
-        #eidx = []
-        #iidx = []
-        
         for i in range(self.nV):
             mx, my = 0, irD/tan(pi/self.nV)
             dx, dy = rotate_2D((mx, my), 2*i*pi/self.nV)
@@ -1226,18 +1200,6 @@ class Polygontile(Geometry2D):
             _ft.rotate(2*pi*i/self.nV)
             _ft.translate(dx, dy)
             coord.append(_ft[:-1])
-
-            #eidx.extend(list(range(
-            #    (i*self.nV + 1)*(self.nD - 1) - (1 + i),
-            #    (i+1)*self.nV*(self.nD-1) - (1 + i)
-            #)))
-
-            #iidx.extend(reversed(list(range(
-            #    (i*self.nV + 1)*(self.nD - 1) - (self.nD + i - 1), (i*self.nV + 1)*(self.nD - 1) - i
-            #))))
-            
-        #eidx.append(self.nD - 2)
-        #iidx.append(self.nD - 2)
 
         return np.concatenate(tuple(coord), axis=0)
     
@@ -1997,12 +1959,6 @@ class SunCross(Geometry2D):
             f_ls.translate(m[0]*self.uS/8, m[1]*self.uS/8)
             coord.append(f_ls[:])
             
-        #eidx = [list(range(nD_oc)) + [0]]
-        #iidx = []
-        
-        #for i in range(4):
-        #    iidx.append(list(range(nD_oc + i*nD_ic, nD_oc + (i+1)*nD_ic)) + [nD_oc + i*nD_ic])
-        
         return np.concatenate(tuple(coord), axis=0)
     
     def _linear_paths(self) -> Tuple[list, list]:
@@ -2070,9 +2026,6 @@ class CelticCross(Geometry2D):
         return np.concatenate(tuple(coord), axis=0)
     
     def _linear_paths(self) -> Tuple[list, list]:
-        #eidx = [list(range(4*self.nD_i, self.nD)) + [4*self.nD_i]]
-        #iidx = [list(range(i*self.nD_i, (i+1)*self.nD_i)) + [i*self.nD_i] for i in range(4)]
-
         eidx = [linear_ring(4*self.nD_i, self.nD)]
         iidx = [linear_ring(i*self.nD_i, (i+1)*self.nD_i) for i in range(4)]
 
