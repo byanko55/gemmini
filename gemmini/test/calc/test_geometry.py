@@ -26,10 +26,7 @@ def test_convex_hull():
     
     _, exterior_edges = convex_hull(points)
     
-    for i, j in exterior_edges:
-        pa = points[i]
-        pb = points[j]
-
+    for pa, pb in exterior_edges:
         _x = [pa[0], pb[0]]
         _y = [pa[1], pb[1]]
         plt.plot(_x, _y, 'bo', linestyle="--", zorder=1)
@@ -42,11 +39,8 @@ def test_concave_hull():
     plt.scatter(xs, ys)
     
     _, exterior_edges = concave_hull(points)
-    
-    for i, j in exterior_edges:
-        pa = points[i]
-        pb = points[j]
 
+    for pa, pb in exterior_edges:
         _x = [pa[0], pb[0]]
         _y = [pa[1], pb[1]]
         plt.plot(_x, _y, 'bo', linestyle="--", zorder=1)

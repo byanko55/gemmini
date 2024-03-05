@@ -34,7 +34,7 @@ def convex_hull(xy:COORDINATES) -> np.ndarray:
 
     v = hull.vertices
 
-    exterior_edges = [(v[i], v[(i+1)%len(v)]) for i in range(len(v))]
+    exterior_edges = [(xy[v[i]], xy[v[(i+1)%len(v)]]) for i in range(len(v))]
     exterior_points = [xy[i] for i in v]
 
     return exterior_points, exterior_edges
@@ -65,6 +65,7 @@ def concave_hull(xy:COORDINATES, alpha:float = 0.9) -> np.ndarray:
     
     xs, ys, xS, yS = bounding_box(xy)
     scale = dist((xs, ys), (xS, yS))/2
+    n = len(xy)
     
     tri = Delaunay(xy)
 
@@ -100,7 +101,7 @@ def concave_hull(xy:COORDINATES, alpha:float = 0.9) -> np.ndarray:
         r = a*b*c/(4.0*area)
 
         # Here's the radius filter.
-        if r < scale*1.0/alpha:
+        if r < scale/(alpha):
             find_opp(opp, i, j, k)
             find_opp(opp, j, k, i)
             find_opp(opp, i, k, j)
@@ -140,20 +141,41 @@ def concave_hull(xy:COORDINATES, alpha:float = 0.9) -> np.ndarray:
 
     edges = [k for k,v in opp.items() if len(v) == 1 and k not in ER]
 
+    if len(edges) < 3:
+        return None, None
+
     exterior_edges = []
     exterior_points = []
 
-    _, q  = edges[0]
+    adj = {}
+    chk = {}
 
-    while edges:
-        for i, e in enumerate(edges):
-            if e[0] != q and e[1] != q:
-                continue
+    for e in edges:
+        if e[0] not in adj:
+            adj[e[0]] = set()
 
-            exterior_points.append(xy[q])
-            exterior_edges.append(e)
-            q = e[1] if e[0] == q else e[0]
-            del edges[i]
-            break
+        if e[1] not in adj:
+            adj[e[1]] = set()
+
+        adj[e[0]].add(e[1])
+        adj[e[1]].add(e[0])
+        chk[e[0]] = 0
+        chk[e[1]] = 0
+
+    def dfs(p, adj, chk):
+        chk[p] = 1
+        res = [p]
+
+        for q in adj[p]:
+            if chk[q] == 0:
+                res = res + dfs(q, adj, chk)
+                break
+
+        return res
+
+    _idx = dfs(edges[0][0], adj, chk)
+
+    exterior_points = [xy[i] for i in _idx]
+    exterior_edges = [(xy[_idx[i]], xy[_idx[(i+1)%len(_idx)]]) for i in range(len(_idx))]
 
     return np.array(exterior_points), exterior_edges
