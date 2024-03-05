@@ -62,6 +62,9 @@ class CircularSector(Geometry2D):
         
         return coord
     
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
+    
     def __len__(self) -> int:
         return self.nD
         
@@ -122,6 +125,9 @@ class CircularSegment(Geometry2D):
         coord = np.concatenate((coord_arc, coord_chord[1:-1]), axis=0)
         
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -168,6 +174,9 @@ class Wave(Geometry2D):
         coord = np.stack((x, rad), axis=1)
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_seq(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -217,6 +226,9 @@ class Helix(Geometry2D):
         coord = np.stack((rad*np.cos(theta), -rad*np.sin(theta) + height), axis=1)
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_seq(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -272,6 +284,9 @@ class Parabola(Geometry2D):
         coord = np.stack((dx, dy), axis=1)
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -314,12 +329,6 @@ class SymmetricSpiral(Geometry2D):
             **kwargs
         )
 
-    def _base_coords(self) -> np.ndarray:
-        coord = np.array([[self._draw_blades(j, i) for j in range(self.nD)] for i in range(self.nV)])
-        coord = coord.reshape(-1, coord.shape[-1])
-
-        return coord
-
     def _draw_blades(self, r, v):
         size = self.rD*r/self.nD
         e = exp(1)
@@ -340,6 +349,19 @@ class SymmetricSpiral(Geometry2D):
         ry = sin(aG)*x + cos(aG)*y
 
         return rx, ry
+
+    def _base_coords(self) -> np.ndarray:
+        coord = np.array([[self._draw_blades(j, i) for j in range(self.nD)] for i in range(self.nV)])
+        coord = coord.reshape(-1, coord.shape[-1])
+        
+        #idx = [[i*self.nD + j for j in range(self.nD)] for i in range(self.nV)]
+
+        return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        eidx = [[i*self.nD + j for j in range(self.nD)] for i in range(self.nV)]
+
+        return eidx, []
     
     def __len__(self) -> int:
         return self.nD*self.nV
@@ -405,8 +427,35 @@ class Star(Geometry2D):
         
         coord.append(_p[:])
         coord = np.concatenate(tuple(coord), axis=0)
+        
+        #eidx = []
+        
+        #for i in range(self.nV):
+        #    for j in range(2*self.nD-3):
+        #        eidx.append(i*(2*self.nD-3) + j)
+        #        
+        #    eidx.append(self.nV*(2*self.nD-3) + (i+1)*(self.nD-1) - 1)
+            
+        #eidx.append(0)
+        
+        #iidx = list(range(self.nV*(2*self.nD-3), self.nV*(3*self.nD-4))) + [self.nV*(2*self.nD-3)]
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        eidx = []
+        
+        for i in range(self.nV):
+            for j in range(2*self.nD-3):
+                eidx.append(i*(2*self.nD-3) + j)
+                
+            eidx.append(self.nV*(2*self.nD-3) + (i+1)*(self.nD-1) - 1)
+            
+        eidx.append(0)
+
+        iidx = linear_ring(self.nV*(2*self.nD-3), self.nV*(3*self.nD-4))
+
+        return [eidx], [iidx]
 
     def __len__(self) -> int:
         return self.nV*(3*self.nD-4)
@@ -455,6 +504,9 @@ class Heart(Geometry2D):
         coord[:, 1] += (self.uS/2)*(3.2 + 1.3/2.7 - 1.3/0.7)/3
         
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -499,7 +551,11 @@ class ButterFly(Geometry2D):
         )/2
 
         coord = to_cartesian(rad, theta)/1.35
+        
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -536,6 +592,9 @@ class CottonCandy(Geometry2D):
         fig = Epicycloid(p=self.nC, q=1, size=self.uS, num_dot=self.nD)
 
         return np.array(fig[:])
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -574,6 +633,9 @@ class Boomerang(Geometry2D):
         coord = np.stack((rx, ry), axis=1)*self.uS/2
         
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -619,6 +681,9 @@ class Stellate(Geometry2D):
         coord = np.stack((rx, ry), axis=1)*self.uS/2
         
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -656,12 +721,12 @@ class Shuriken(Geometry2D):
 
         if self.R <= 0:
             raise ValueError(" \
-                [ERROR] Shuriken: Tried to assign a non-positive valut to the `size` \
+                [ERROR] Shuriken: Tried to assign a non-positive valut to the `size`. \
             ")
         
         if self.nD < 2 :
             raise ValueError(" \
-                [ERROR] Shuriken: Each blade must have at least 2 dots \
+                [ERROR] Shuriken: Each blade must have at least 2 dots. \
             ")
         
         super().__init__(
@@ -683,6 +748,7 @@ class Shuriken(Geometry2D):
         coord_b = np.vstack((x_b, y_b)).T
         
         coord = np.concatenate((coord_a, coord_b), axis=0)
+        
         return coord
 
     def _base_coords(self) -> np.ndarray:
@@ -695,6 +761,9 @@ class Shuriken(Geometry2D):
         coord = np.concatenate((edge_right, edge_up, edge_left, edge_down), axis=0)
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return 8*(self.nD - 1)
@@ -711,6 +780,7 @@ class _Flower(Geometry2D):
         s:float = None,
         n:int = None,
         nL:int = None,
+        planar:bool = True,
         **kwargs
     ) -> None:
         """
@@ -727,12 +797,15 @@ class _Flower(Geometry2D):
             "%(gem_type))
 
         super().__init__(
-            planar=True,
+            planar=planar,
             **kwargs
         )
 
     def _base_coords(self) -> np.ndarray:
         return self.draw_func(self.uS/2, self.nD, self.nL)
+
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD*self.nL if self.gem_type == 'Flower_D' else self.nD
@@ -926,6 +999,9 @@ class Clover(Geometry2D):
         
         coord = to_cartesian(rad, theta)
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -969,6 +1045,9 @@ class FattyStar(Geometry2D):
         
         coord = to_cartesian(rad, theta)
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -1017,6 +1096,9 @@ class Moon(Geometry2D):
         coord[fliped_idx, 0] = -self.bR*self.rD - coord[fliped_idx, 0]
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -1043,15 +1125,15 @@ class Yinyang(Geometry2D):
         self.uS, self.nD, = s, n
 
         super().__init__(
-            planar=True,
+            planar=False,
             **kwargs
         )
     
     def _base_coords(self) -> np.ndarray:
         _s = 5*pi*self.uS/4
         _nD = self.nD + 3
-        nD_r = int(_nD * (pi*self.uS/4)/_s)
-        nD_R = _nD - 2*nD_r
+        self.nD_r = nD_r = int(_nD * (pi*self.uS/4)/_s)
+        self.nD_R = nD_R = _nD - 2*nD_r
         
         a1 = Arc(r=self.uS/4, a=pi, n=nD_r)
         a2 = Arc(r=self.uS/4, a=pi, n=nD_r)
@@ -1061,9 +1143,32 @@ class Yinyang(Geometry2D):
         
         c = Circle(r=self.uS/2, n=nD_R)
         
-        coord = np.concatenate((c[:], a2[1:], a1[1:-1]), axis=0)
+        coord = np.concatenate((c[:], a2[:-1], a1[1:-1]), axis=0)
         
+        #eidx1 = list(range(nD_R//2))
+        #eidx1.extend(list(reversed(list(range(nD_R, nD_R+nD_r-1)))))
+        #eidx1.extend(list(range(nD_R+nD_r-1, nD_R+2*nD_r-3)))
+        #eidx1.append(0)
+
+        #eidx2 = list(range(nD_R//2, nD_R))
+        #eidx2.extend(list(reversed(list(range(nD_R+nD_r-1, nD_R+2*nD_r-3)))))
+        #eidx2.extend(list(range(nD_R, nD_R+nD_r-1)))
+        #eidx2.append(nD_R//2)
+
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        eidx1 = linear_seq(self.nD_R//2)
+        eidx1.extend(linear_seq(self.nD_R + self.nD_r - 2, self.nD_R - 1, -1))
+        eidx1.extend(linear_seq(self.nD_R + self.nD_r-1, self.nD_R + 2*self.nD_r-3))
+        eidx1.append(0)
+
+        eidx2 = linear_seq(self.nD_R//2, self.nD_R)
+        eidx2.extend(linear_seq(self.nD_R + 2*self.nD_r - 4, self.nD_R + self.nD_r - 2, -1))
+        eidx2.extend(linear_seq(self.nD_R, self.nD_R + self.nD_r-1))
+        eidx2.append(self.nD_R//2)
+
+        return [eidx1, eidx2], []
 
     def __len__(self) -> int:
         return self.nD
@@ -1111,6 +1216,9 @@ class Polygontile(Geometry2D):
         _fo = RegularPolygon(size=irD, num_dot=self.nD, num_vertex=self.nV)
         coord = []
         
+        #eidx = []
+        #iidx = []
+        
         for i in range(self.nV):
             mx, my = 0, irD/tan(pi/self.nV)
             dx, dy = rotate_2D((mx, my), 2*i*pi/self.nV)
@@ -1119,7 +1227,43 @@ class Polygontile(Geometry2D):
             _ft.translate(dx, dy)
             coord.append(_ft[:-1])
 
+            #eidx.extend(list(range(
+            #    (i*self.nV + 1)*(self.nD - 1) - (1 + i),
+            #    (i+1)*self.nV*(self.nD-1) - (1 + i)
+            #)))
+
+            #iidx.extend(reversed(list(range(
+            #    (i*self.nV + 1)*(self.nD - 1) - (self.nD + i - 1), (i*self.nV + 1)*(self.nD - 1) - i
+            #))))
+            
+        #eidx.append(self.nD - 2)
+        #iidx.append(self.nD - 2)
+
         return np.concatenate(tuple(coord), axis=0)
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        eidx, iidx = [], []
+
+        for i in range(self.nV):
+            eidx.extend(
+                linear_seq(
+                    (i*self.nV + 1)*(self.nD - 1) - (1 + i),
+                    (i+1)*self.nV*(self.nD-1) - (1 + i)
+                )
+            )
+
+            iidx.extend(
+                linear_seq(
+                    (i*self.nV + 1)*(self.nD - 1) - i - 1,
+                    (i*self.nV + 1)*(self.nD - 1) - (self.nD + i),
+                    -1
+                )
+            )
+            
+        eidx.append(self.nD - 2)
+        iidx.append(self.nD - 2)
+
+        return [eidx], [iidx]
         
     def __len__(self) -> int:
         return self.nV*(self.nV*(self.nD-1)-1)
@@ -1164,7 +1308,7 @@ class Gear(Geometry2D):
 
     def _base_coords(self) -> np.ndarray:
         irD = 2*self.rD/(2 + 1/tan(pi/self.nC))
-        f = RegularPolygon(s = irD, nD=self.nD, nV=4)
+        f = RegularPolygon(s = irD, n=self.nD, v=4)
         f.translateX(irD*(1 + 1/tan(pi/self.nC))/2)
 
         coord = []
@@ -1178,6 +1322,9 @@ class Gear(Geometry2D):
         coord = np.concatenate(tuple(coord), axis=0)
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return 3*(self.nD-1)*self.nC
@@ -1248,13 +1395,18 @@ class SnippedRect(Geometry2D):
     def _base_coords(self) -> np.ndarray:
         iS = [i * min(self.h, self.w)/2 for i in self.bR]
         _s = 2*(self.h + self.w) - (2 - sqrt(2))*sum(iS)
-        _nD = self.nD + 3 
-        + (not (self.bR[0] == self.bR[1] == 1 and self.h == self.w)) 
-        + (not (self.bR[1] == self.bR[3] == 1 and self.h == self.w))
-        + (not (self.bR[2] == self.bR[3] == 1 and self.h == self.w))
-        + (not (self.bR[2] == self.bR[0] == 1 and self.h == self.w))
-        num_dot = _nD
+        _nD = self.nD + 4 
         
+        for i, j in [(0, 1), (1, 3), (2, 3), (2, 0)]:
+            if self.bR[i] == self.bR[j] == 0:
+                continue
+            
+            if self.h == self.w and self.bR[i] == self.bR[j] == 1:
+                continue
+            
+            _nD += 1
+        
+        num_dot = _nD
         edges = []
         
         if self.bR[0] > 0:
@@ -1296,6 +1448,9 @@ class SnippedRect(Geometry2D):
             edges.append(Segment((self.w/2, -self.h/2 + iS[2]), (self.w/2, self.h/2 - iS[0]), n=num_dot))
             
         return connect_edges(*edges)
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -1366,11 +1521,17 @@ class RoundedRect(Geometry2D):
     def _base_coords(self) -> np.ndarray:
         iS = [i * min(self.h, self.w)/2 for i in self.bR]
         _s = 2*(self.h + self.w) - (2 - pi/2)*sum(iS)
-        _nD = self.nD + 3 
-        + (not (self.bR[0] == self.bR[1] == 1 and self.h == self.w)) 
-        + (not (self.bR[1] == self.bR[3] == 1 and self.h == self.w))
-        + (not (self.bR[2] == self.bR[3] == 1 and self.h == self.w))
-        + (not (self.bR[2] == self.bR[0] == 1 and self.h == self.w))
+        _nD = self.nD + 4 
+        
+        for i, j in [(0, 1), (1, 3), (2, 3), (2, 0)]:
+            if self.bR[i] == self.bR[j] == 0:
+                continue
+            
+            if self.h == self.w and self.bR[i] == self.bR[j] == 1:
+                continue
+            
+            _nD += 1
+        
         num_dot = _nD
         
         edges = []
@@ -1378,7 +1539,7 @@ class RoundedRect(Geometry2D):
         if self.bR[0] > 0:
             nD_e = int(_nD * (pi/2)*iS[0]/_s)
             num_dot -= nD_e
-            _f = Arc(r=iS[0], nD=nD_e, a=pi/2)
+            _f = Arc(r=iS[0], n=nD_e, a=pi/2)
             _f.translate(self.w/2-iS[0], self.h/2-iS[0])
             edges.append(_f)
         
@@ -1390,7 +1551,7 @@ class RoundedRect(Geometry2D):
         if self.bR[1] > 0:
             nD_e = int(_nD * (pi/2)*iS[1]/_s)
             num_dot -= nD_e
-            _f = Arc(r=iS[1], nD=nD_e, a=pi/2)
+            _f = Arc(r=iS[1], n=nD_e, a=pi/2)
             _f.rotate(pi/2)
             _f.translate(-self.w/2+iS[1], self.h/2-iS[1])
             edges.append(_f)
@@ -1403,7 +1564,7 @@ class RoundedRect(Geometry2D):
         if self.bR[3] > 0:
             nD_e = int(_nD * (pi/2)*iS[3]/_s)
             num_dot -= nD_e
-            _f = Arc(r=iS[3], nD=nD_e, a=pi/2)
+            _f = Arc(r=iS[3], n=nD_e, a=pi/2)
             _f.rotate(pi)
             _f.translate(-self.w/2+iS[3], -self.h/2+iS[3])
             edges.append(_f)
@@ -1416,7 +1577,7 @@ class RoundedRect(Geometry2D):
         if self.bR[2] > 0:
             nD_e = num_dot if (self.bR[2] == self.bR[0] == 1 and self.h == self.w) else int(_nD * (pi/2)*iS[2]/_s)
             num_dot -= nD_e
-            _f = Arc(r=iS[2], nD=nD_e, a=pi/2)
+            _f = Arc(r=iS[2], n=nD_e, a=pi/2)
             _f.rotate(3*pi/2)
             _f.translate(self.w/2-iS[2], -self.h/2+iS[2])
             edges.append(_f)
@@ -1425,6 +1586,9 @@ class RoundedRect(Geometry2D):
             edges.append(Segment((self.w/2, -self.h/2 + iS[2]), (self.w/2, self.h/2 - iS[0]), n=num_dot))
             
         return connect_edges(*edges)
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -1466,13 +1630,16 @@ class Plaque(Geometry2D):
         
     def _base_coords(self) -> np.ndarray:
         theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
-        rad = 1/np.abs(np.sin(2*theta))
+        rad = 1/np.abs(np.sin(2*theta) + 1e-6)
         rad = np.power(rad, 0.5)
         rad = self.uS * np.minimum(rad/(2 - self.bR), np.ones_like(theta))/2
         
         coord = to_cartesian(rad, theta)
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -1536,6 +1703,9 @@ class Ring(Geometry2D):
         coord = np.concatenate(tuple(coord), axis=0)
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [], []
 
     def __len__(self) -> int:
         return self.nD
@@ -1587,11 +1757,11 @@ class BlockArc(Geometry2D):
 
     def _base_coords(self) -> np.ndarray:
         _s = self.aG*(self.R + self.r) + 2*(self.R - self.r)
-        _c = self.nD + 4
+        _c = self.nD
         
         nD_edge = int((_c * (self.R-self.r))//_s)
         nD_major = int((_c*self.aG*self.R)//_s)
-        nD_minor = _c - nD_edge - nD_major
+        nD_minor = _c - 2*nD_edge - nD_major
         
         theta_major = np.linspace(0, self.aG, nD_major+2)[1:-1]
         theta_minor = np.linspace(0, self.aG, nD_minor+2)[1:-1]
@@ -1600,7 +1770,7 @@ class BlockArc(Geometry2D):
         rad_minor = self.r*np.ones_like(theta_minor)
         
         coord_R = to_cartesian(rad_major, theta_major)
-        coord_r = to_cartesian(rad_minor, theta_minor)
+        coord_r = to_cartesian(rad_minor, theta_minor)[::-1]
         coord_e1 = Segment(
             p1=(self.r, 0), 
             p2=(self.R, 0),
@@ -1615,6 +1785,9 @@ class BlockArc(Geometry2D):
         coord = np.concatenate((coord_e1, coord_R, coord_e2, coord_r), axis=0)
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -1629,7 +1802,7 @@ class Cross_A(Geometry2D):
         self,
         s:float = None,
         w:float = None,
-        n:int = 128,
+        n:int = 32,
         **kwargs
     ) -> None:
         """
@@ -1681,6 +1854,9 @@ class Cross_A(Geometry2D):
             coord.append(rotate_2D(_c, i*pi/2))
         
         return np.concatenate(tuple(coord), axis=0)
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return 4*(self.nD-1)
@@ -1722,13 +1898,16 @@ class Cross_B(Geometry2D):
         
     def _base_coords(self) -> np.ndarray:
         theta = np.linspace(0, 2*np.pi, self.nD+1)[:-1]
-        rad = 1/np.abs(np.sin(2*theta))
+        rad = 1/np.abs(np.sin(2*theta) + 1e-6)
         rad = np.power(rad, 2.5)
         rad = self.uS * np.minimum(rad/(2 - self.bR), np.ones_like(theta))/2
         
         coord = to_cartesian(rad, theta)
 
         return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -1765,15 +1944,18 @@ class Cross_C(Geometry2D):
         for i in range(4):
             _h = self.uS/2
             _w = self.uS/3
-            f = ConcaveKite(s=(_h, _w), n=[self.nD]*4)
+            f = ConcaveKite(s=(_h, _w), n=[self.nD//2, self.nD, self.nD, self.nD//2])
             f.translateY(2*_w*_h/(2*_h + _w))
             f.rotate(pi*i/2)
             coord.append(f[1:])
 
         return np.concatenate(tuple(coord), axis=0)
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
-        return 4*(4*self.nD-5)
+        return 4*(2*self.nD + 2*(self.nD//2) - 5)
     
     def __hash__(self) -> int:
         return super().__hash__() + hash((self.gem_type, self.uS, self.nD))
@@ -1797,14 +1979,14 @@ class SunCross(Geometry2D):
         self.uS, self.nD = s, n
         
         super().__init__(
-            planar=False,
+            planar=True,
             **kwargs
         )
         
     def _base_coords(self) -> np.ndarray:
         _s = self.uS*(4 + 3*pi)/2
-        nD_ic = int(self.nD*self.uS*(pi/8 + 1/2)/_s)
-        nD_oc = self.nD - 4*nD_ic
+        self.nD_ic = nD_ic = int(self.nD*self.uS*(pi/8 + 1/2)/_s)
+        self.nD_oc = nD_oc = self.nD - 4*nD_ic
 
         f_oc = Circle(self.uS/2, nD_oc)
         coord = [f_oc[:]]
@@ -1814,8 +1996,20 @@ class SunCross(Geometry2D):
             f_ls.rotate(i*pi/2)
             f_ls.translate(m[0]*self.uS/8, m[1]*self.uS/8)
             coord.append(f_ls[:])
+            
+        #eidx = [list(range(nD_oc)) + [0]]
+        #iidx = []
+        
+        #for i in range(4):
+        #    iidx.append(list(range(nD_oc + i*nD_ic, nD_oc + (i+1)*nD_ic)) + [nD_oc + i*nD_ic])
         
         return np.concatenate(tuple(coord), axis=0)
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        eidx = [linear_ring(self.nD_oc)]
+        iidx = [linear_ring(self.nD_oc + i*self.nD_ic, self.nD_oc + (i+1)*self.nD_ic) for i in range(4)]
+
+        return eidx, iidx
 
     def __len__(self) -> int:
         return self.nD
@@ -1848,34 +2042,44 @@ class CelticCross(Geometry2D):
 
     def _base_coords(self) -> np.ndarray:
         _s = self.uS * (20 + 6*pi)/7
-        _nD = self.nD + 15
-        nD_e = int(_nD*self.uS*(1/7)/_s)
-        nD_c = int(_nD*self.uS*(pi/7)/_s)
-        nD_i = int((_nD - 12*nD_e - 4*nD_c)/4)
+        _nD = self.nD + 16
+        self.nD_e = nD_e = int(_nD*self.uS*(1/7)/_s)
+        self.nD_c = nD_c = int(_nD*self.uS*(pi/7)/_s)
+        self.nD_i = nD_i = int((_nD - 12*nD_e - 4*nD_c)/4)
 
         coord = []
+
+        for i in range(4):
+            _iar = CircularSector(self.uS/7, pi/2, nD_i)
+            _iar.translate(self.uS/14, self.uS/14)
+            _iar.rotate(i*pi/2)
+            coord.append(_iar[:])
 
         for i in range(4):
             _e1 = Segment((self.uS*5/14, -self.uS/14), (self.uS/2, -self.uS/14), n=nD_e)
             _e2 = Segment((self.uS/2, -self.uS/14), (self.uS/2, self.uS/14), n=nD_e)
             _e3 = Segment((self.uS/2, self.uS/14), (self.uS*5/14, self.uS/14), n=nD_e)
-            _ar = Arc(self.uS*2/7, pi/2, nD_c)
+            _ar = Arc(self.uS*2/7, pi/2, nD_c + (0 if i < 3 else _nD - 12*nD_e - 4*(nD_c + nD_i)))
             _ar.translate(self.uS/14, self.uS/14)
 
             _c = connect_edges(_e1, _e2, _e3, _ar)
             _c = rotate_2D(_c, i*pi/2)
 
             coord.append(_c)
-
-            _iar = CircularSector(self.uS/7, pi/2, nD_i + (0 if i < 3 else _nD - 12*nD_e - 4*(nD_c + nD_i)))
-            _iar.translate(self.uS/14, self.uS/14)
-            _iar.rotate(i*pi/2)
-            coord.append(_iar[:])
         
         return np.concatenate(tuple(coord), axis=0)
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        #eidx = [list(range(4*self.nD_i, self.nD)) + [4*self.nD_i]]
+        #iidx = [list(range(i*self.nD_i, (i+1)*self.nD_i)) + [i*self.nD_i] for i in range(4)]
+
+        eidx = [linear_ring(4*self.nD_i, self.nD)]
+        iidx = [linear_ring(i*self.nD_i, (i+1)*self.nD_i) for i in range(4)]
+
+        return eidx, iidx
 
     def __len__(self) -> int:
-        return 4*self.nD
+        return self.nD
     
     def __hash__(self) -> int:
         return super().__hash__() + hash((self.gem_type, self.uS, self.nD))
@@ -1886,7 +2090,7 @@ class BasqueCross(Geometry2D):
     def __init__(
         self,
         s:float = None,
-        n:int = 128,
+        n:int = 32,
         **kwargs
     ) -> None:
         """
@@ -1905,9 +2109,9 @@ class BasqueCross(Geometry2D):
 
     def _base_coords(self) -> np.ndarray:
         _s = self.uS*pi
-        _nD = self.nD + 2
-        nD_r = int(_nD*(pi*self.uS/4)/_s)
-        nD_R = _nD - 2*nD_r
+        _nD = self.nD + 3
+        self.nD_r = nD_r = int(_nD*(pi*self.uS/4)/_s)
+        self.nD_R = nD_R = _nD - 2*nD_r
 
         coord = []
 
@@ -1930,6 +2134,9 @@ class BasqueCross(Geometry2D):
             coord.append(_c)
         
         return np.concatenate(tuple(coord), axis=0)
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return 4*self.nD
@@ -1991,11 +2198,16 @@ class Lshape(Geometry2D):
             p2 = (self.uS, 0),
             num_dot=self.nD
         )
+
+        coord = connect_edges(top_1, right_1, top_2, left, bottom, right_2)
         
-        return connect_edges(top_1, right_1, top_2, left, bottom, right_2)
+        return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
-        return 6*self.nD - 8
+        return 8*self.nD - 8
     
     def __hash__(self) -> int:
         return super().__hash__() + hash((self.gem_type, self.uS, self.nD))
@@ -2053,12 +2265,12 @@ class HalfFrame(Geometry2D):
 
     def _base_coords(self) -> np.ndarray:
         _s = 2*(self.h + self.w) + 2*(sqrt(2) - 2)*self.iw
-        _nD = self.nD + 5
-        nD_d = int(_nD * (sqrt(2)*self.iw)/_s)
-        nD_r = int(_nD * (self.h - 2*self.iw)/_s)
-        nD_b = int(_nD * (self.w - 2*self.iw)/_s)
-        nD_l = int(_nD * (self.h)/_s)
-        nD_t = _nD - (2*nD_d + nD_r + nD_b + nD_l)
+        _nD = self.nD + 6
+        self.nD_d = nD_d = int(_nD * (sqrt(2)*self.iw)/_s)
+        self.nD_r = nD_r = int(_nD * (self.h - 2*self.iw)/_s)
+        self.nD_b = nD_b = int(_nD * (self.w - 2*self.iw)/_s)
+        self.nD_l = nD_l = int(_nD * (self.h)/_s)
+        self.nD_t = nD_t = _nD - (2*nD_d + nD_r + nD_b + nD_l)
 
         top = Segment( 
             p1 = (self.w/2, self.h/2), 
@@ -2090,8 +2302,13 @@ class HalfFrame(Geometry2D):
             p2 = (self.w/2, self.h/2),
             num_dot=nD_d
         )
+
+        coord = connect_edges(top, left, diagonal_1, right, bottom, diagonal_2)
         
-        return connect_edges(top, left, diagonal_1, right, bottom, diagonal_2)
+        return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -2143,11 +2360,11 @@ class Arrow(Geometry2D):
         
     def _base_coords(self) -> np.ndarray:
         _s = (5 - sqrt(5))*self.h/2 + 2*self.w
-        _nD = self.nD + 6
-        nD_d = int(_nD*(3*self.h/4)/_s)
-        nD_r = int(_nD*(self.h/4)/_s)
-        nD_h = int(_nD*(self.w - sqrt(5)*self.h/4)/_s)
-        nD_l = _nD - 2*(nD_d + nD_r + nD_h)
+        _nD = self.nD + 7
+        self.nD_d = nD_d = int(_nD*(3*self.h/4)/_s)
+        self.nD_r = nD_r = int(_nD*(self.h/4)/_s)
+        self.nD_h = nD_h = int(_nD*(self.w - sqrt(5)*self.h/4)/_s)
+        self.nD_l = nD_l = _nD - 2*(nD_d + nD_r + nD_h)
         
         diagonal_1 = Segment( 
             p1 = (self.w/2, 0), 
@@ -2184,8 +2401,13 @@ class Arrow(Geometry2D):
             p2 = (self.w/2, 0),
             num_dot=nD_d
         )
+
+        coord = connect_edges(diagonal_1, right_1, top, left, bottom, right_2, diagonal_2)
         
-        return connect_edges(diagonal_1, right_1, top, left, bottom, right_2, diagonal_2)
+        return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -2237,16 +2459,16 @@ class DoubleArrow(Geometry2D):
         
     def _base_coords(self) -> np.ndarray:
         _s = (4 - sqrt(5))*self.h + 2*self.w
-        _nD = self.nD + 9
-        nD_d = int(_nD*(3*self.h/4)/_s)
-        nD_v = int(_nD*(self.h/4)/_s)
-        nD_h = int(_nD*(self.w - sqrt(5)*self.h/2)/_s)
-        _nD -= 4*(nD_d + nD_v) + 2*nD_h
+        _nD = self.nD + 10
+        self.nD_d = nD_d = int(_nD*(3*self.h/4)/_s)
+        self.nD_v = nD_v = int(_nD*(self.h/4)/_s)
+        self.nD_h = nD_h = int((_nD - 4*(nD_d + nD_v))/2)
+        _nD -= (4*(nD_d + nD_v) + 2*nD_h)
         
         diagonal_1 = Segment(
             p1 = (self.w/2, 0), 
             p2 = (self.w/2 - sqrt(5)*self.h/4, self.h/2),
-            num_dot=nD_d + _nD
+            num_dot=nD_d
         )
         vertical_1 = Segment( 
             p1 = (self.w/2 - sqrt(5)*self.h/4, self.h/2), 
@@ -2281,7 +2503,7 @@ class DoubleArrow(Geometry2D):
         bottom = Segment(
             p1 = (-self.w/2 + sqrt(5)*self.h/4, -self.h/4), 
             p2 = (self.w/2 - sqrt(5)*self.h/4, -self.h/4),
-            num_dot=nD_h
+            num_dot=nD_h + _nD
         )
         vertical_4 = Segment(
             p1 = (self.w/2 - sqrt(5)*self.h/4, -self.h/4), 
@@ -2293,8 +2515,8 @@ class DoubleArrow(Geometry2D):
             p2 = (self.w/2, 0),
             num_dot=nD_d
         )
-        
-        return connect_edges(
+
+        coord = connect_edges(
             diagonal_1, 
             vertical_1, 
             top, 
@@ -2306,6 +2528,11 @@ class DoubleArrow(Geometry2D):
             vertical_4,
             diagonal_4
         )
+        
+        return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -2357,10 +2584,10 @@ class ArrowPentagon(Geometry2D):
         
     def _base_coords(self) -> np.ndarray:
         _s = (5 - sqrt(5))*self.h/2 + 2*self.w
-        _nD = self.nD + 4
-        nD_d = int(_nD*(3*self.h/4)/_s)
-        nD_h = int(_nD*(self.w - sqrt(5)*self.h/4)/_s)
-        nD_v = _nD - 2*(nD_d + nD_h)
+        _nD = self.nD + 5
+        self.nD_d = nD_d = int(_nD*(3*self.h/4)/_s)
+        self.nD_h = nD_h = int(_nD*(self.w - sqrt(5)*self.h/4)/_s)
+        self.nD_v = nD_v = _nD - 2*(nD_d + nD_h)
         
         diagonal_1 = Segment(
             p1 = (self.w/2, 0), 
@@ -2387,8 +2614,13 @@ class ArrowPentagon(Geometry2D):
             p2 = (self.w/2, 0),
             num_dot=nD_d
         )
+
+        coord = connect_edges(diagonal_1, top, left, bottom, diagonal_2)
         
-        return connect_edges(diagonal_1, top, left, bottom, diagonal_2)
+        return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -2440,10 +2672,10 @@ class ArrowChevron(Geometry2D):
         
     def _base_coords(self) -> np.ndarray:
         _s = self.w + 2*sqrt(self.h**2 + self.w**2)
-        _nD = self.nD + 5
-        nD_d = int(_nD*(sqrt(self.h**2 + self.w**2)/2)/_s)
-        nD_h = int(_nD*(self.w/2)/_s)
-        _nD -= 2*(nD_d + nD_h)
+        _nD = self.nD + 6
+        self.nD_d = nD_d = int(_nD*(sqrt(self.h**2 + self.w**2)/2)/_s)
+        self.nD_h = nD_h = int(_nD*(self.w/2)/_s)
+        _nD -= (4*nD_d + 2*nD_h)
         
         diagonal_1 = Segment( 
             p1 = (self.w/2, 0), 
@@ -2475,8 +2707,13 @@ class ArrowChevron(Geometry2D):
             p2 = (self.w/2, 0),
             num_dot=nD_d
         )
+
+        coord = connect_edges(diagonal_1, top, diagonal_2, diagonal_3, bottom, diagonal_4)
         
-        return connect_edges(diagonal_1, top, diagonal_2, diagonal_3, bottom, diagonal_4)
+        return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -2509,9 +2746,9 @@ class Teardrop(Geometry2D):
         
     def _base_coords(self) -> np.ndarray:
         _s = self.uS*(3*pi/2 + 2)/2
-        _nD = self.nD + 2
-        nD_e = int(_nD*(self.uS/2)/_s)
-        nD_a = _nD - 2*nD_e
+        _nD = self.nD + 3
+        self.nD_e = nD_e = int(_nD*(self.uS/2)/_s)
+        self.nD_a = nD_a = _nD - 2*nD_e
         
         right = Segment(
             p1 = (self.uS*cos(pi/4)/2, self.uS*sin(pi/4)/2), 
@@ -2524,10 +2761,15 @@ class Teardrop(Geometry2D):
             num_dot=nD_e
         )
 
-        arc = Arc(r=self.uS/2, nD=nD_a, a=3*pi/2)
+        arc = Arc(r=self.uS/2, n=nD_a, a=3*pi/2)
         arc.rotate(3*pi/4)
         
-        return connect_edges(right, left, arc)
+        coord = connect_edges(right, left, arc)
+
+        return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self))], []
 
     def __len__(self) -> int:
         return self.nD
@@ -2554,14 +2796,14 @@ class Nosign(Geometry2D):
         self.uS, self.nD = s, n
         
         super().__init__(
-            planar=False,
+            planar=True,
             **kwargs
         )
         
     def _base_coords(self) -> np.ndarray:
         _s = self.uS*(sqrt(3) + 8*pi/3)/2
-        nD_ic = int(self.nD*(pi*self.uS/6 + sqrt(3)*self.uS/4)/_s)
-        nD_oc = self.nD - 2*nD_ic
+        self.nD_ic = nD_ic = int(self.nD*(pi*self.uS/6 + sqrt(3)*self.uS/4)/_s)
+        self.nD_oc = nD_oc = self.nD - 2*self.nD_ic
 
         f_oc = Circle(self.uS/2, nD_oc)
         f_ls = CircularSegment(self.uS/4, 2*pi/3, nD_ic)
@@ -2569,8 +2811,19 @@ class Nosign(Geometry2D):
         f_1.rotate(23*pi/12)
         f_2 = f_ls.copy()
         f_2.rotate(11*pi/12)
+
+        coord = np.concatenate((f_oc[:], f_1[:], f_2[:]), axis=0)
         
-        return np.concatenate((f_oc[:], f_1[:], f_2[:]), axis=0)
+        return coord
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        _e = [linear_ring(self.nD_oc)]
+        _i = [
+            linear_ring(self.nD_oc, self.nD_oc + self.nD_ic),
+            linear_ring(self.nD_oc + self.nD_ic, self.nD_oc + 2*self.nD_ic)
+        ]
+
+        return _e, _i
 
     def __len__(self) -> int:
         return self.nD

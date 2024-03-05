@@ -2,10 +2,11 @@ from gemmini.misc import *
 from gemmini.d2._gem2D import Geometry2D
 
 
-class Pointcloud2D(Geometry2D):
+class PointSet2D(Geometry2D):
     def __init__(
         self,
         points:Union[list, np.ndarray],
+        planar:bool = False,
         **kwargs
     ) -> None:
         """
@@ -13,24 +14,28 @@ class Pointcloud2D(Geometry2D):
 
         Args:
             points (list): set of cartesian coordinates (x, y).
+            planar (bool): True, if the geometry has explicit boundary formed by its edges.
         """
         if not hasattr(self, 'gem_type'):
-            self.gem_type = 'Pointcloud2D'
+            self.gem_type = 'PointSet2D'
 
         self.points = np.array(points)
         
         if len(self.points.shape) != 2 or self.points.shape[1] != 2 :
             raise ValueError(" \
-                [ERROR] Pointcloud2D: Input matrix does not match the format of 2D-point set. \
+                [ERROR] PointSet2D: Input matrix does not match the format of 2D-point set. \
             ")
         
         super().__init__(
-            planar=False,
+            planar=planar,
             **kwargs
         )
         
     def _base_coords(self) -> np.ndarray:
         return self.points
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [], []
 
     def __len__(self) -> int:
         return len(self.points)
@@ -39,7 +44,7 @@ class Pointcloud2D(Geometry2D):
         return super().__hash__()
 
 
-class Point2D(Pointcloud2D):
+class Point2D(PointSet2D):
     @geminit()
     def __init__(
         self, 
@@ -59,6 +64,7 @@ class Point2D(Pointcloud2D):
 
         super().__init__(
             points=[[px, py]],
+            planar=False,
             **kwargs
         )
         
@@ -66,7 +72,56 @@ class Point2D(Pointcloud2D):
         return hash((self.gem_type, self.px, self.py))
 
 
-class Grid(Pointcloud2D):
+class Pointcloud2D(PointSet2D):
+    @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
+    def __init__(
+        self,
+        s:Union[float, Tuple[float, float]] = -1,
+        h:float = -1,
+        w:float = -1,
+        n:int = 16,
+        **kwargs
+    ) -> None:
+        """
+        Points that randomly scattered in a 2D Euclidean space.
+        
+        Args:
+            s | size (float | tuple): scale of the geometry.
+                Passing a single number makes both the height/width be fixed as `s`,
+                while an input like a pair (h, w) generates a geometry with height=`h` and width=`w`. 
+                Alternatively, you can utilize keyword `h` and `w`, to specify the height/width.
+            h | height (float): maximum vertical distance.
+            w | width (float): maximum horizontal distance.
+            n | num_dot (int): determines how many dots consist of the point cloud.
+        """
+        self.h, self.w, self.nD = h, w, n
+        
+        if isNumber(s) and s != -1:
+            self.h, self.w = map(int, [s]*2)
+        
+        if isNumberArray(s):
+            if len(s) != 2:
+                raise(" \
+                    [ERROR] Pointcloud2D: Argument `size` must be either a single number or a pair of numbers. \
+                ")
+                
+            self.h, self.w = s[0], s[1]
+
+        points = np.random.rand(self.nD, 2)
+        points[:, 0] *= self.w
+        points[:, 1] *= self.h
+
+        super().__init__(
+            points=points,
+            planar=False,
+            **kwargs
+        )
+        
+    def __hash__(self) -> int:
+        return hash((self.gem_type, self.h, self.w, self.nD))
+
+
+class Grid(PointSet2D):
     @geminit({'size':'s', 'height':'h', 'width':'w', 'num_dot':'n'})
     def __init__(
         self,
@@ -124,6 +179,7 @@ class Grid(Pointcloud2D):
 
         super().__init__(
             points=points,
+            planar=False,
             **kwargs
         )
     

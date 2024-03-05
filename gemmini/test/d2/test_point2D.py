@@ -6,10 +6,10 @@ import pytest
 
 def test_point():
     canva = Canvas()
-    p = Point2D(7,6)
+    p = Point2D(3,4)
     
     points = 5*np.random.rand(20, 2)
-    pc = Pointcloud2D(points)
+    pc = PointSet2D(points)
 
     print("bounding box: ", pc.bounding_box())
     print("centroid: ", pc.center())

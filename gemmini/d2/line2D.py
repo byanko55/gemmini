@@ -302,6 +302,9 @@ class Segment(Geometry2D):
             coord[:, 1] = (d * self.p2[1] + (self.nD - d - 1) * self.p1[1])/(self.nD-1)
 
             return coord
+        
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_seq(len(self))], []
 
     def __len__(self) -> int:
         return self.nD

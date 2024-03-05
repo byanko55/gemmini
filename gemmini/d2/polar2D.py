@@ -39,8 +39,14 @@ class Curve2D(Geometry2D):
     def _base_coords(self) -> np.ndarray:
         return self.v
     
+    def _linear_paths(self) -> Tuple[list, list]:
+        if isinstance(self, (Arc, Spiral, Cycloid)):
+            return [linear_seq(len(self))], []
+
+        return [linear_ring(len(self))], []
+    
     def __len__(self) -> int:
-        raise len(self.v)
+        return len(self.v)
     
     def __hash__(self) -> int:
         return super().__hash__()
@@ -447,7 +453,7 @@ class Epicycloid(Curve2D):
         super().__init__(
             r=self.uS/2,
             points=coord,
-            planar=True,
+            planar=(self.q == 1),
             **kwargs
         )
 
@@ -589,6 +595,7 @@ class Folium(Curve2D):
         rad = self.rD*np.power(np.cos(theta), 3)
 
         coord = to_cartesian(rad, theta)
+        coord[:, 0] -= self.rD/2
 
         super().__init__(
             r=self.rD,

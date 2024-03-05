@@ -29,6 +29,9 @@ class Polygon2D(Geometry2D):
         
     def _base_coords(self) -> np.ndarray:
         return self.v
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        return [linear_ring(len(self.v))], []
 
     def __len__(self) -> int:
         return NotImplementedError
@@ -554,7 +557,7 @@ class Trapezoid(Polygon2D):
         )
 
         coord = connect_edges(top, right, bottom, left)
-        coord[:, 0] -= (2*x + self.s[0] - self.s[2])/4
+        coord[:, 0] -= (2*x - self.s[0] - self.s[2])/4
         coord[:, 1] -= (-y/2)
 
         super().__init__(
@@ -897,7 +900,7 @@ class ConcaveKite(Polygon2D):
         )
 
     def __len__(self) -> int:
-        return 4*(self.nD - 1)
+        return sum(self.nD) - 4
     
     def __hash__(self) -> int:
         return super().__hash__() + hash((self.gem_type, self.a, self.b, tuple(self.nD)))
@@ -932,10 +935,24 @@ class ConcaveStar(Polygon2D):
                 [ERROR] ConcaveStar: Each side must have at least 2 dots. \
             ")
 
-        ang = pi/self.nV
-        orD = self.uS * sin(ang) / (cos(2*ang)*cos(ang) + sin(2*ang)*sin(ang))
+        ang = 2*pi/self.nV
+        _s = sin(ang/2)
+        _t = tan(ang)
+        _c = cos(ang/2)
+        irD = self.uS/(_s*_t + _c)
+        
+        coord = []
+        
+        for i in range(self.nV):
+            left = Segment((irD*_s, irD*_c), (0, self.uS), self.nD)
+            right = Segment((0, self.uS), (-irD*_s, irD*_c), self.nD)
+            
+            _coord = np.concatenate((left[:-1], right[:-1]), axis = 0)
+            _coord = rotate_2D(_coord, i*ang)
+            
+            coord.append(_coord)
 
-        coord = self._draw_substar(orD)
+        coord = np.concatenate(tuple(coord), axis=0)
 
         super().__init__(
             vertices=coord,

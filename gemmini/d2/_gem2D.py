@@ -1,8 +1,7 @@
 
 from gemmini.misc import *
 from gemmini.d2.transform2D import *
-from gemmini.calc.coords import dist, interior_pixels, outer_product
-from gemmini.calc.geometry import concave_hull
+from gemmini.calc.coords import dist, outer_product
 
 import copy
 import random
@@ -11,8 +10,6 @@ import random
 def transform(func):
    def func_wrapper(self, *args, **kwargs):
        self._base_hash += get_hash(*args, **kwargs)
-       self._exterior = None
-       self._interior = None
        func(self, *args, **kwargs)
    return func_wrapper
 
@@ -21,7 +18,6 @@ class Geometry2D:
     def __init__(
         self,
         planar:bool,
-        density:float = 16,
         **kwargs
     ) -> None:
         """
@@ -30,25 +26,25 @@ class Geometry2D:
 
         All subclasses should overwrite 
             1) `_base_coords`, a list of original (x, y) coordinates of vertices.
-            2) `__len__`, which is expected to return the diameter of the given geometry.
+            2) `_linear_paths`, subsets of indexing numbers organized to indicate 
+                which vertex forms either the external boundary or a inner ring (also called `hole`).
+            3) `__len__`, which is expected to return the diameter of the given geometry.
 
         Args:
             planar (bool): True, if the geometry has explicit boundary formed by its edges.
-            density (float): density of points consisting of the geometry.
         """
         self._planar = planar
-        self._exterior = None
-        self._interior = None
-        self._density = density
         self._base_hash = random.getrandbits(128)
 
         for attr_name in ['uS', 'h', 'w']:
             if hasattr(self, attr_name) and getattr(self, attr_name) <= 0 :
                 raise ValueError(" \
                     [ERROR] %s: Arguments such as `size`, `height`, and `width` can't be non-positive. \
-                "%(self.gem_type))
+                    "%(self.gem_type)
+                )
 
         self._points = self._base_coords()
+        self._outers, self._inners = self._linear_paths()
 
         if not isinstance(self._points, np.ndarray):
             self._points = np.array(self._points)
@@ -56,7 +52,8 @@ class Geometry2D:
         if len(self._points.shape) != 2 or self._points.shape[1] != 2 :
             raise ValueError(" \
                 [ERROR] %s: Check every vertices to conform the 2D format (x, y). \
-            "%(self.gem_type))
+                "%(self.gem_type)
+            )
 
     def _base_coords(self) -> np.ndarray:
         """
@@ -64,41 +61,35 @@ class Geometry2D:
         """
         raise NotImplementedError
     
-    def interior(self, density:float = 16) -> np.ndarray:
+    def _linear_paths(self) -> Tuple[list, list]:
         """
-        Return the point grid enclosed by the exterior of the geometry.
-
-        Args:
-            gem_type (str): explicit type of a geometric object.
-            density (float): density of points inside a result geometry.
+        Find out the subsets of vertex indices that forms either 
+        the external boundary or a hole inside of the geometry.
         """
-        if not self._planar:
+        raise NotImplementedError
+    
+    def _sub_figs(self, idx_groups:list) -> list:
+        if len(idx_groups) == 0 :
             warnings.warn(" \
-                [WARN] Can't find interior points from `%s` object \
+                [WARN] %s class does not support segregating exterior (or interior) points. \
                 "%(self.gem_type)
             )
             
-            return None
-
-        if type(self._interior) != type(None) and self._density == density:
-            return self._interior
+            return []
         
-        e = self.exterior()
-        self._interior = interior_pixels(e, density=density)
-
-        return self._interior
+        return [Sequence(points=self._points[_grp]) for _grp in idx_groups]
     
-    def exterior(self) -> np.ndarray:
+    def interior(self) -> List:
+        """
+        Return the point grid enclosed by the exterior of the geometry.
+        """
+        return self._sub_figs(self._inners)
+    
+    def exterior(self) -> List:
         """
         Return border of the geometric object.
         """
-        if type(self._exterior) != type(None):
-            return self._exterior
-
-        exterior_points, _ = concave_hull(self._points)
-        self._exterior = exterior_points
-
-        return self._exterior
+        return self._sub_figs(self._outers)
 
     def coords(self) -> np.ndarray:
         """
@@ -111,15 +102,6 @@ class Geometry2D:
         Returns a list of coordinates for each axis.
         """
         return self._points[:, 0], self._points[:, 1]
-    
-    def coordsFull(self) -> np.ndarray:
-        """
-        Returns a list of (x, y) coordinates for the pixels (includes both interior & exterior).
-        """
-        _i = self.interior()
-        _e = self.exterior()
-
-        return np.concatenate((_i, _e), axis=0)
     
     def copy(self) -> object:
         """
@@ -337,44 +319,6 @@ class Geometry2D:
         self._points = skewY(self._points, a)
         
     @transform
-    def reflect(self, p:Tuple[float, float]) -> None:
-        """
-        Flip the figure about the specific point (x, y), and merge it with the original figure.
-
-        Args:
-            p (tuple): a point along which to flip over.
-        """
-        self._points = reflect(self._points, p)
-    
-    @transform
-    def reflectX(self) -> None:
-        """
-        Flip the figure about the x-axis, and merge it with the original figure.
-        """
-        self._points = reflectX(self._points)
-    
-    @transform
-    def reflectY(self) -> None:
-        """
-        Flip the figure about the y-axis, and merge it with the original figure.
-        """
-        self._points = reflectY(self._points)
-        
-    @transform
-    def reflectXY(self) -> None:
-        """
-        Flip the figure about the origin (0, 0), and merge it with the original figure.
-        """
-        self._points = reflectXY(self._points)
-        
-    @transform
-    def reflectDiagonal(self) -> None:
-        """
-        Flip the figure about the line: y = x, and merge it with the original figure.
-        """
-        self._points = reflectDiagonal(self._points)
-        
-    @transform
     def flip(self, p:Tuple[float, float]) -> None:
         """
         Flip about the given point (x, y).
@@ -457,28 +401,39 @@ class Geometry2D:
         """
         self._points = shatter(self._points, p, rate)
 
+    def _partial_area(self, indices):
+        s = 0
+
+        for i in range(1, len(indices)-2):
+            pa = self._points[indices[0]]
+            pb = self._points[indices[i]]
+            pc = self._points[indices[i+1]]
+
+            s += outer_product(pa, pb, pc)/2
+
+        return abs(s)
+
     def area(self) -> float:
         """
         Return the area enclosed by the geometric object.
         """
         if not self._planar:
             warnings.warn(" \
-                [WARN] area: %s does not support calculating the area \
-            "%(self.gem_type))
+                [WARN] area: %s does not support calculating its area. \
+                "%(self.gem_type)
+            )
             
             return 0
         
-        _ep, _ = concave_hull(self.coords())
+        res = 0
+
+        for indices in self._outers:
+            res += self._partial_area(indices)
         
-        if len(_ep) <= 2 :
-            return 0
-        
-        s = 0
-        
-        for i in range(1, len(_ep)-1):
-            s += outer_product(_ep[0], _ep[i], _ep[i+1])/2
+        for indices in self._inners:
+            res -= self._partial_area(indices)
             
-        return abs(s)
+        return res
 
     def __len__(self) -> int:
         """
@@ -519,6 +474,53 @@ class Geometry2D:
     def __hash__(self) -> int:
         return self._base_hash
     
+    
+class Sequence(Geometry2D):
+    @geminit()
+    def __init__(
+        self,
+        points:Union[list, np.ndarray],
+        **kwargs
+    ) -> None:
+        """
+        A path (or series of edges) around a geometric object.
+        It is also called `Line string`, where it can be either closed or non-closed.
+
+        Args:
+            points (list): set of cartesian coordinates (x, y).
+        """
+        self.points = np.array(points)
+        
+        if len(self.points.shape) != 2 or self.points.shape[1] != 2 :
+            raise ValueError(" \
+                [ERROR] Sequence: Input matrix does not match the format of 2D-point set. \
+            ")
+        
+        self.closed = isSame(self.points[0], self.points[-1])
+        
+        super().__init__(
+            planar=self.closed,
+            **kwargs
+        )
+        
+    def _base_coords(self) -> np.ndarray:
+        if self.closed:
+            return self.points[:-1]
+
+        return self.points
+    
+    def _linear_paths(self) -> Tuple[list, list]:
+        if self.closed:
+            return [linear_ring(len(self)-1)], []
+        
+        return [linear_ring(len(self))], []
+
+    def __len__(self) -> int:
+        return len(self.points) - int(self.closed)
+    
+    def __hash__(self) -> int:
+        return super().__hash__()
+
 
 def union(figures=Tuple[Geometry2D, ...], density:int = 16, **kwargs) -> Geometry2D:
     raise NotImplementedError(" \

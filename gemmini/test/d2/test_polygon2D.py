@@ -5,12 +5,12 @@ from gemmini.canvas import Canvas
 import pytest
 
 def test_polygon():
-    f = Polygon2D([[0,0], [3,0], [3,3], [2,1]])
+    f = Polygon2D([[0,0], [3,0], [3,3], [2,1.5]])
 
-    assert f.area() == 3
+    assert f.area() == 3.75
 
     canva = Canvas()
-    canva.add(f)
+    canva.add(f, show_area=True)
     canva.plot()
 
 def test_basic_polygon():
