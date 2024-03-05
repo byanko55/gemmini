@@ -41,7 +41,7 @@ def test_canvas_3():
     b = Ellipse(4, 8, 48)
     a.translate(-6, -4)
     
-    canva.add((a, b), draw_radius=True)
+    canva.add((a, b), show_radius=True)
     canva.plot()
     
 def test_canvas_4():
@@ -55,9 +55,9 @@ def test_canvas_4():
     b.translate(-8, 6)
     c.translate(8, 0)
     
-    canva.add(a, draw_edges=True)
+    canva.add(a, show_edges=True)
     canva.add(b, draw_interior=True)
-    canva.add(c, draw_dimension=True)
+    canva.add(c, show_size=True)
     canva.plot()
 
 
