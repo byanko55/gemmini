@@ -202,7 +202,7 @@ def rotate_2D(xy:COORDINATES, theta:float) -> COORDINATES:
         xy = np.array(xy)
     
     c, s = np.cos(theta), np.sin(theta)
-    r = np.array([[c, -s], [s, c]])
+    r = np.array([[c, s], [-s, c]])
     m = np.dot(xy, r)
 
     return m
