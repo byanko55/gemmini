@@ -1,5 +1,5 @@
 from gemmini.misc import *
-from gemmini.calc.coords import dist, gradient
+from gemmini.calc.coords import dist, gradient, farthest_point
 from gemmini.d2._gem2D import Geometry2D
 from gemmini.d2.line2D import Line2D
 from gemmini.d2.polar2D import Curve2D
@@ -170,19 +170,63 @@ class Canvas:
             # Display dimension
             if g_config['opt_dd']:
                 self._plot_dimension(gem, canvas_size)
+                
+            xc, yc = gem.center()
+            _, y_min, _, y_max = gem.bounding_box()
+            (x_d, y_d), d = farthest_point(gem[:])
+            _mini = d < canvas_size/5
+            tag_pos = max(canvas_size/20, (y_max-y_min)/10)
+                
+            # Display centroid
+            if g_config['opt_dc']:
+                if g_config['opt_dr'] and y_d <= yc:
+                    self._plot_center(gem, (xc, yc + tag_pos))
+                else :
+                    self._plot_center(gem, (xc, yc - tag_pos))
+                    
+            # Display radius
+            if g_config['opt_dr'] and not _mini:
+                self._plot_radius(gem, (x_d, y_d))
 
             # Display area
             if g_config['opt_da']:
-                self._plot_area(gem, canvas_size)
+                if not (_mini or g_config['opt_dc'] or g_config['opt_dr'] or g_config['opt_dt']):
+                    self._plot_area(gem, (xc, yc - (y_max-y_min)/10))
+                    
                 self._plot_interior(gem, g_config, ax, opaque=True)
 
-            # Display centroid
-            if g_config['opt_dc']:
-                self._plot_center(gem, canvas_size)
+            # Display class name
+            if g_config['opt_dt']:
+                tag = "%s"%(gem.gem_type)
+                
+                if g_config['opt_da']:
+                    a = gem.area()
                     
-            # Display radius
-            if g_config['opt_dr']:
-                self._plot_radius(gem, canvas_size)
+                    tag += "(Area = %.2f"%(a)
+                    
+                    if g_config['opt_dr'] and _mini:
+                        tag += ", %s = %.2f"%('r' if isinstance(gem, Curve2D) else 'd', d)
+                    
+                    tag += ")"
+                elif g_config['opt_dr'] and _mini:
+                    tag += "(%s = %.2f)"%('r' if isinstance(gem, Curve2D) else 'd', d)
+                
+                self._plot_classname(gem, (xc, y_min - tag_pos), tag)
+            else :
+                if g_config['opt_da'] and (_mini or g_config['opt_dc'] or g_config['opt_dr']):
+                    a = gem.area()
+                    
+                    tag = "Area = %.2f"%(a)
+                    
+                    if g_config['opt_dr'] and _mini:
+                        self._plot_radius(gem, (x_d, y_d), False)
+                        tag += ", %s = %.2f"%('r' if isinstance(gem, Curve2D) else 'd', d)
+                        
+                    self._plot_classname(gem, (xc, y_min - tag_pos), tag)
+                elif g_config['opt_dr'] and _mini:
+                    tag = "%s = %.2f"%('r' if isinstance(gem, Curve2D) else 'd', d)
+                    self._plot_radius(gem, (x_d, y_d), False)
+                    self._plot_classname(gem, (xc, y_min - tag_pos), tag)
 
         plt.show()
 
@@ -209,7 +253,7 @@ class Canvas:
             zorder = g_config['zorder']
         )
 
-    def _plot_center(self, gem:Geometry2D, canvas_size:float) -> None:
+    def _plot_center(self, gem:Geometry2D, txy:Tuple[float, float]) -> None:
         xc, yc = gem.center()
 
         plt.scatter(
@@ -217,8 +261,8 @@ class Canvas:
         )
         
         plt.text(
-            xc, 
-            yc + canvas_size/25,
+            txy[0], 
+            txy[1],
             "(%.2f, %.2f)"%(xc, yc),
             bbox=dict(facecolor=self.theme['facecolor'], alpha=0.7, edgecolor='none'),
             ha='center',
@@ -227,30 +271,51 @@ class Canvas:
             zorder = ORDER_MAX
         )
 
-    def _plot_radius(self, gem:Geometry2D, canvas_size:float) -> None:
+    def _plot_radius(self, gem:Geometry2D, pxy:Tuple[float, float], text:bool=True) -> None:
         xc, yc = gem.center()
-        max_d = 0
-        p = 0
+        x_min, y_min, x_max, y_max = gem.bounding_box()
         
-        _c = gem.coords()
+        plt.plot([xc, pxy[0]], [yc, pxy[1]], c=self.theme['edgecolor'], linestyle='dashed')
         
-        for i, (_x, _y) in enumerate(_c):
-            _d = dist((xc, yc), (_x, _y))
-            
-            if dist((xc, yc), (_x, _y)) > max_d :
-                max_d = _d
-                p = i
-                
-        _g = gradient((xc, yc), _c[p], radian=True) 
-                
-        plt.plot([xc, _c[p][0]], [yc, _c[p][1]], c=self.theme['edgecolor'])
+        if not text:
+            return
+        
+        if pxy[0] >= xc and pxy[1] >= yc:
+            if (pxy[0] - xc) >= (pxy[1] - yc):
+                txy = [(xc + pxy[0])/2, (yc + pxy[1])/2 - (y_max-y_min)/10]
+                ha, va = 'left', 'top'
+            else :
+                txy = [(xc + pxy[0])/2 - (x_max-x_min)/10, (yc + pxy[1])/2]
+                ha, va = 'right', 'bottom'
+        elif pxy[0] < xc and pxy[1] >= yc:
+            if (xc - pxy[0]) < (pxy[1] - yc):
+                txy = [(xc + pxy[0])/2 + (x_max-x_min)/10, (yc + pxy[1])/2]
+                ha, va = 'left', 'bottom'
+            else :
+                txy = [(xc + pxy[0])/2, (yc + pxy[1])/2 - (y_max-y_min)/10]
+                ha, va = 'right', 'top'
+        elif pxy[0] < xc and pxy[1] < yc:
+            if (xc - pxy[0]) >= (yc - pxy[1]):
+                txy = [(xc + pxy[0])/2, (yc + pxy[1])/2 + (y_max-y_min)/10]
+                ha, va = 'right', 'bottom'
+            else :
+                txy = [(xc + pxy[0])/2 + (x_max-x_min)/10, (yc + pxy[1])/2]
+                ha, va = 'left', 'top'
+        else:    
+            if (xc - pxy[0]) < (yc - pxy[1]):
+                txy = [(xc + pxy[0])/2 - (x_max-x_min)/10, (yc + pxy[1])/2]
+                ha, va = 'right', 'top'
+            else :
+                txy = [(xc + pxy[0])/2, (yc + pxy[1])/2 + (y_max-y_min)/10]
+                ha, va = 'left', 'bottom'
+        
         plt.text(
-            (xc + _c[p][0])/2 + cos(_g + 3*pi/2) * canvas_size/10,
-            (yc + _c[p][1])/2 + sin(_g + 3*pi/2) * canvas_size/30, 
-            "%s = %.2f"%('r' if isinstance(gem, Curve2D) else 'd', max_d),
+            txy[0],
+            txy[1], 
+            "%s = %.2f"%('r' if isinstance(gem, Curve2D) else 'd', dist(txy, (xc, yc))),
             bbox=dict(facecolor=self.theme['facecolor'], alpha=0.7, edgecolor='none'),
-            ha='center',
-            va='center',
+            ha=ha,
+            va=va,
             weight='bold',
             zorder = ORDER_MAX
         )
@@ -362,14 +427,24 @@ class Canvas:
             zorder = ORDER_MAX
         )
 
-    def _plot_area(self, gem:Geometry2D, canvas_size:float) -> None:
-        xc, yc = gem.center()
+    def _plot_area(self, gem:Geometry2D, txy:Tuple[float, float]) -> None:
         a = gem.area()
 
         plt.text(
-            xc, 
-            yc - canvas_size/25,
+            txy[0], 
+            txy[1],
             "(Area = %.2f)"%(a),
+            bbox=dict(facecolor=self.theme['facecolor'], alpha=0.7, edgecolor='none'),
+            ha='center',
+            weight='bold',
+            zorder = ORDER_MAX
+        )
+
+    def _plot_classname(self, gem:Geometry2D, txy:Tuple[float, float], tag:str) -> None:
+        plt.text(
+            txy[0], 
+            txy[1],
+            tag,
             bbox=dict(facecolor=self.theme['facecolor'], alpha=0.7, edgecolor='none'),
             ha='center',
             weight='bold',
@@ -397,29 +472,38 @@ class Canvas:
         box_size = max(0.01, max(Mx-mx, My-my)*self.scale)
         cx, cy = (Mx+mx)/2, (My+my)/2
 
-        _u = floor(log10(box_size))
-        _u = 10 ** _u
-        _v = int(box_size//_u) + 1
-        canvas_size = _v * _u 
+        _p = floor(log10(2*box_size/3))
+        _u = 5*(((4*box_size/3)*10**(1 - _p))//5)
+        _tu = 5
+
+        if 20 <= _u and _u < 40:
+            _tu = 10
+        elif 40 <= _u and _u < 100:
+            _tu = 20 
+        elif 100 <= _u:
+            _tu = 50
+
+        _tu *= 10**(_p - 1)
+        canvas_size = _u * 10**(_p - 1)
+        
         lb, rb = cx - canvas_size/2, cx + canvas_size/2
         bb, tb = cy - canvas_size/2, cy + canvas_size/2
 
         ax.set_xlim([lb, rb])
         ax.set_ylim([bb, tb])
 
-        _tu = _u*(_v//2)
-
         if self.draw_major:
             tick_lb, tick_rb = _tu*(lb//_tu + 1), _tu*(rb//_tu)
             tick_bb, tick_tb = _tu*(bb//_tu + 1), _tu*(tb//_tu)
-            ax.set_xticks(np.linspace(tick_lb, tick_rb, int((tick_rb-tick_lb)//_tu + 1)))
-            ax.set_yticks(np.linspace(tick_bb, tick_tb, int((tick_tb-tick_bb)//_tu + 1)))
+            ax.set_xticks(np.linspace(tick_lb, tick_rb, int((tick_rb-tick_lb)//_tu) + 1))
+            ax.set_yticks(np.linspace(tick_bb, tick_tb, int((tick_tb-tick_bb)//_tu) + 1))
 
         if self.draw_minor:
-            mtick_lb, mtick_rb = (_tu/2)*(lb//(_tu/2) + 1), (_tu/2)*(rb//(_tu/2))
-            mtick_bb, mtick_tb = (_tu/2)*(bb//(_tu/2) + 1), (_tu/2)*(tb//(_tu/2))
-            ax.set_xticks(np.linspace(mtick_lb, mtick_rb, int((mtick_rb-mtick_lb)//(_tu/2) + 1)), minor=True)
-            ax.set_yticks(np.linspace(mtick_bb, mtick_tb, int((mtick_tb-mtick_bb)//(_tu/2) + 1)), minor=True)
+            mtick_lb, mtick_rb = (_tu/2)*(2*lb//_tu + 1), (_tu/2)*(2*rb//_tu)
+            mtick_bb, mtick_tb = (_tu/2)*(2*bb//_tu + 1), (_tu/2)*(2*tb//_tu)
+
+            ax.set_xticks(np.linspace(mtick_lb, mtick_rb, round(2*(mtick_rb-mtick_lb)/_tu) + 1), minor=True)
+            ax.set_yticks(np.linspace(mtick_bb, mtick_tb, round(2*(mtick_tb-mtick_bb)/_tu) + 1), minor=True)
 
         ax.set_axisbelow(True)
 
@@ -439,8 +523,8 @@ class Canvas:
         self,
         point:Point2D,
         dot_color:str = None,
-        dot_size:int = 8,
-        dot_style:str = 'o',
+        tickness:int = 8,
+        style:str = 'o',
         display_coord:bool = True,
         zorder:int = 2,
         **kwargs
@@ -451,23 +535,24 @@ class Canvas:
         Args:
             gem (Geometry2D): geometry to be displayed on canvas.
             dot_color (str): color of the pixels.
-            dot_size (int): size of a pixel.
-            dot_style (str): marker style.
+            tickness (int): size of a pixel.
+            style (str): marker style.
                 {'.', 'o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X'}
             display_coord (bool): if True, display text that represents (x, y) coordinates of the point.
             zorder (int): lower zorder values are drawn first.
         """
         fig_config = {
             'fig':point, 
-            'opt_s':dot_size, 
+            'opt_s':tickness, 
             'opt_c':dot_color, 
-            'opt_m':dot_style,
+            'opt_m':style,
             'opt_de':False,
             'opt_di':False,
             'opt_dr':False,
             'opt_dd':False,
             'opt_dc':display_coord,
             'opt_da':False,
+            'opt_dt':False,
             'zorder':zorder + BASE_ORDER
         }
 
@@ -477,14 +562,15 @@ class Canvas:
         self, 
         gem:Geometry2D, 
         dot_color:str = None,
-        dot_size:int = 25,
-        dot_style:str = 'o', 
+        tickness:int = 16,
+        style:str = 'o', 
         fill:bool = False,
         show_edges:bool = False,
         show_radius:bool = False,
         show_size:bool = False,
         show_center:bool = False,
         show_area:bool = False,
+        show_class:bool = False,
         zorder:int = 0,
         **kwargs
     ):
@@ -494,8 +580,8 @@ class Canvas:
         Args:
             gem (Geometry2D): geometry to be displayed on canvas.
             dot_color (str): color of the pixels.
-            dot_size (int): size of a pixel.
-            dot_style (str): marker style.
+            tickness (int): size of a pixel.
+            style (str): marker style.
                 {'.', 'o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X'}
             fill (bool): whether fill pixels in the interior of the geometry.
             show_edges (bool): whether draw path enclosing the given geometry.
@@ -503,6 +589,7 @@ class Canvas:
             show_size (bool) : whether display a height/width of the geometry.
             show_center (bool): if True, display text that represents (x, y) coordinates of the centroid.
             show_area (bool): if True, display the area of the geometry.
+            show_class (bool): if True, display the class name ot the geometry.
             zorder (int): lower zorder values are drawn first.
         """
         if isinstance(gem, PointSet2D) and show_edges:
@@ -522,15 +609,16 @@ class Canvas:
 
         fig_config = {
             'fig':gem, 
-            'opt_s':dot_size, 
+            'opt_s':tickness, 
             'opt_c':dot_color, 
-            'opt_m':dot_style,
+            'opt_m':style,
             'opt_de':show_edges,
             'opt_di':fill,
             'opt_dr':show_radius,
             'opt_dd':show_size,
             'opt_dc':show_center,
             'opt_da':show_area,
+            'opt_dt':show_class,
             'zorder':zorder + BASE_ORDER
         }
 
@@ -540,8 +628,8 @@ class Canvas:
         self, 
         line:Line2D, 
         line_color:str = None,
-        line_width:int = 2,
-        line_style:str = '-',
+        tickness:int = 2,
+        style:str = '-',
         zorder:int = 1,
         **kwargs
     ):
@@ -551,16 +639,16 @@ class Canvas:
         Args:
             line (Line2D): line to be displayed on canvas.
             line_color (str): color of the line.
-            line_width (int): thickness for the line.
-            line_style (str): linestyle.
+            tickness (int): thickness for the line.
+            style (str): linestyle.
                 {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
             zorder (int): lower zorder values are drawn first.
         """
         fig_config = {
             'fig':line,
-            'opt_s':line_width,
+            'opt_s':tickness,
             'opt_c':line_color, 
-            'opt_m':line_style,
+            'opt_m':style,
             'zorder':zorder + BASE_ORDER
         }
 
@@ -588,6 +676,7 @@ class Canvas:
             show_size (bool) : whether display a height/width of the geometry.
             show_center (bool): if True, display text that represents (x, y) coordinates of the centroid.
             show_area (bool): if True, display the area of the geometry.
+            show_class (bool): if True, display the class name ot the geometry.
             zorder (int): lower zorder values are drawn first.
         """
         if not isinstance(gem, (list, tuple)) or isPoint(gem):
@@ -598,42 +687,15 @@ class Canvas:
                 c = color if color != None else self.theme['dotcolor']
             else :
                 c = color if color != None else next(self.theme['figcolor'])
-                
-            size = kwargs.get('tickness')
-            style = kwargs.get('draw_style')
 
             if isPoint(g):
-                self._add_point(
-                    Point2D(g[0], g[1]),
-                    c,
-                    dot_size=size,
-                    dot_style=style,
-                    **kwargs
-                )
+                self._add_point(Point2D(g[0], g[1]), c, **kwargs)
             elif isinstance(g, Point2D):
-                self._add_point(
-                    g, 
-                    c,
-                    dot_size=size,
-                    dot_style=style,
-                    **kwargs
-                )
+                self._add_point(g, c, **kwargs)
             elif isinstance(g, Geometry2D):
-                self._add_gem(
-                    g, 
-                    c,
-                    dot_size=size,
-                    dot_style=style,
-                    **kwargs
-                )
+                self._add_gem(g, c, **kwargs)
             elif isinstance(g, Line2D):
-                self._add_line(
-                    g, 
-                    c, 
-                    line_width=size,
-                    line_style=style,
-                    **kwargs
-                )
+                self._add_line(g, c, **kwargs)
             else :
                 raise ValueError(" \
                     [ERROR] Canva: the input geometry should be either Geometry2D or Line2D object. \

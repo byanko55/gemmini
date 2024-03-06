@@ -230,3 +230,29 @@ def gradient(p:Tuple[float, float], q:Tuple[float, float], radian:bool = False) 
     g = (q[1]-p[1])/(p[1]-p[0])
     
     return atan(g) if radian else g
+
+
+def farthest_point(xy:COORDINATES) -> Tuple[Tuple[float, float], float]:
+    """
+    Find out the most farthest point from the center of the given point cloud.
+
+    Args:
+        xy (tuple | np.ndarray): collection of coordinates on 2D space.
+        
+    Returns:
+        p (tuple): the x, y coordinates of the target.
+        d (float): distance from the center. 
+    """
+    max_d = 0
+    p = 0
+    
+    xc, yc = centroid(xy)
+    
+    for i, (_x, _y) in enumerate(xy):
+        _d = dist((xc, yc), (_x, _y))
+        
+        if dist((xc, yc), (_x, _y)) > max_d :
+            max_d = _d
+            p = i
+            
+    return xy[p], max_d
