@@ -32,9 +32,6 @@ class Curve2D(Geometry2D):
         super().__init__( 
             **kwargs
         )
-
-    def rad(self) -> float:
-        return self.rD
     
     def _base_coords(self) -> np.ndarray:
         return self.v
@@ -187,6 +184,7 @@ class Spiral(Curve2D):
         r:float = None,
         a:float = 2*pi,
         n:int = 32,
+        gem_type:str = 'Spiral',
         **kwargs
     ) -> None:
         """
@@ -200,6 +198,7 @@ class Spiral(Curve2D):
             n | num_dot (int): number of dots consisting of the spiral.
         """
         self.rD, self.aG, self.nD = r, a, n
+        self.gem_type = gem_type
 
         if self.aG <= 0:
             raise ValueError(" \
@@ -256,7 +255,7 @@ def HyperbolicSpiral(
 
         return coord
 
-    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
+    return Spiral(r, a, n, draw_func=_draw_curve, gem_type='HyperbolicSpiral', **kwargs)
 
 
 def ParabolicSpiral(
@@ -290,7 +289,7 @@ def ParabolicSpiral(
 
         return coord
 
-    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
+    return Spiral(r, a, n, draw_func=_draw_curve, gem_type='ParabolicSpiral', **kwargs)
 
 
 def LituusSpiral(
@@ -317,7 +316,7 @@ def LituusSpiral(
 
         return coord
 
-    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
+    return Spiral(r, a, n, draw_func=_draw_curve, gem_type='LituusSpiral', **kwargs)
 
 
 def LogarithmicSpiral(
@@ -349,7 +348,7 @@ def LogarithmicSpiral(
 
         return coord
 
-    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
+    return Spiral(r, a, n, draw_func=_draw_curve, gem_type='LogarithmicSpiral', **kwargs)
 
 
 def BoundedSpiral(
@@ -375,7 +374,7 @@ def BoundedSpiral(
 
         return coord
 
-    return Spiral(r, a, n, draw_func=_draw_curve, **kwargs)
+    return Spiral(r, a, n, draw_func=_draw_curve, gem_type='BoundedSpiral', **kwargs)
 
 
 class Cycloid(Curve2D):
