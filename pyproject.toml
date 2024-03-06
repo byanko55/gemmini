@@ -27,7 +27,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -35,10 +34,11 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 dependencies = [
-    "numpy>=1.15",
-    "matplotlib>=3.3"
+    "numpy>=1.21",
+    "scipy>=1.7",
+    "matplotlib>=3.3",
 ]
 
 [project.urls]
