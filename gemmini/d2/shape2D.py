@@ -316,12 +316,12 @@ class SymmetricSpiral(Geometry2D):
 
         if self.nV < 3 :
             raise ValueError(" \
-                [ERROR] SymmetricSpiral: Requires at least 3 blades \
+                [ERROR] SymmetricSpiral: Requires at least 3 blades. \
             ")
 
         if self.nD < 2 :
             raise ValueError(" \
-                [ERROR] SymmetricSpiral: Each blade must have at least 2 dots \
+                [ERROR] SymmetricSpiral: Each blade must have at least 2 dots. \
             ")
         
         super().__init__(
@@ -1105,8 +1105,8 @@ class Yinyang(Geometry2D):
         Yin and Yang symbol
         
         Args:
-            s | size (float): scale of the geometry
-            n | num_dot (int): number of points
+            s | size (float): scale of the geometry.
+            n | num_dot (int): number of points.
         """
         self.uS, self.nD, = s, n
 
@@ -1135,17 +1135,17 @@ class Yinyang(Geometry2D):
         return coord
     
     def _linear_paths(self) -> Tuple[list, list]:
-        eidx1 = linear_seq(self.nD_R//2)
-        eidx1.extend(linear_seq(self.nD_R + self.nD_r - 2, self.nD_R - 1, -1))
-        eidx1.extend(linear_seq(self.nD_R + self.nD_r-1, self.nD_R + 2*self.nD_r-3))
-        eidx1.append(0)
+        iidx1 = linear_seq(self.nD_R//2)
+        iidx1.extend(linear_seq(self.nD_R + self.nD_r - 2, self.nD_R - 1, -1))
+        iidx1.extend(linear_seq(self.nD_R + self.nD_r-1, self.nD_R + 2*self.nD_r-3))
+        iidx1.append(0)
 
-        eidx2 = linear_seq(self.nD_R//2, self.nD_R)
-        eidx2.extend(linear_seq(self.nD_R + 2*self.nD_r - 4, self.nD_R + self.nD_r - 2, -1))
-        eidx2.extend(linear_seq(self.nD_R, self.nD_R + self.nD_r-1))
-        eidx2.append(self.nD_R//2)
+        iidx2 = linear_seq(self.nD_R//2, self.nD_R)
+        iidx2.extend(linear_seq(self.nD_R + 2*self.nD_r - 4, self.nD_R + self.nD_r - 2, -1))
+        iidx2.extend(linear_seq(self.nD_R, self.nD_R + self.nD_r-1))
+        iidx2.append(self.nD_R//2)
 
-        return [eidx1, eidx2], []
+        return [linear_ring(self.nD_R)], [iidx1, iidx2]
 
     def __len__(self) -> int:
         return self.nD
