@@ -103,6 +103,23 @@ class Geometry2D:
         """
         return self._points[:, 0], self._points[:, 1]
     
+    def coordSet(self) -> Tuple[Any, Any]:
+        """
+        Returns the x,y coordinates of its exterior/interior.
+        """
+        _e = [tuple(map(tuple, self._points[_grp])) for _grp in self._outers]
+        _i = [tuple(map(tuple, self._points[_grp])) for _grp in self._inners]
+
+        if len(_e) > 1:
+            warnings.warn(" \
+                [WARN] coordSet: Class `%s` does not support calling `coordSet`. \
+                This will be corrected in a future update. \
+            "%(self.gem_type))
+
+            return (), ()
+        
+        return _e[0], tuple(_i)
+    
     def copy(self) -> object:
         """
         Return a copy of the given geometric object.
