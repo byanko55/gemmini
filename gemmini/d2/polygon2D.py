@@ -139,7 +139,7 @@ class IsoscelesTriangle(Polygon2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -224,7 +224,7 @@ class RightTriangle(Polygon2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -312,7 +312,7 @@ class Parallelogram(Polygon2D):
         self.h, self.w, self.nD, self.aG = h, w, n, a
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -408,7 +408,7 @@ class Rhombus(Polygon2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -629,7 +629,7 @@ class Rectangle(Polygon2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -720,7 +720,7 @@ class Kite(Polygon2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -827,7 +827,7 @@ class ConcaveKite(Polygon2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:

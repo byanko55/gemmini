@@ -262,7 +262,7 @@ class Parabola(Geometry2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -1330,7 +1330,7 @@ class SnippedRect(Geometry2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -1456,7 +1456,7 @@ class RoundedRect(Geometry2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -2193,7 +2193,7 @@ class HalfFrame(Geometry2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -2295,7 +2295,7 @@ class Arrow(Geometry2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -2394,7 +2394,7 @@ class DoubleArrow(Geometry2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -2519,7 +2519,7 @@ class ArrowPentagon(Geometry2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
@@ -2607,7 +2607,7 @@ class ArrowChevron(Geometry2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:

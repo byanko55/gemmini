@@ -97,7 +97,7 @@ class Pointcloud2D(PointSet2D):
         self.h, self.w, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
         
         if isNumberArray(s):
             if len(s) != 2:
@@ -149,7 +149,7 @@ class Grid(PointSet2D):
         self.h, self.w = h, w
         
         if isNumber(s) and s != -1:
-            self.h, self.w = map(int, [s]*2)
+            self.h, self.w = map(float, [s]*2)
         
         if isNumberArray(s):
             if len(s) != 2:

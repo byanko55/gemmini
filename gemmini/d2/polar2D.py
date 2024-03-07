@@ -148,7 +148,7 @@ class Ellipse(Curve2D):
         self.rH, self.rW, self.nD = h, w, n
         
         if isNumber(s) and s != -1:
-            self.rH, self.rW = map(int, [s]*2)
+            self.rH, self.rW = map(float, [s]*2)
             
         if isNumberArray(s):
             if len(s) != 2:
