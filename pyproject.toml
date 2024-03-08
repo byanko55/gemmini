@@ -15,7 +15,7 @@ maintainers = [
     {name = "gemmini contributors"},
 ]
 description = "Python package for constructing and handling geometric objects"
-readme = "README.rst"
+readme = "README.md"
 keywords = ["geometry", "drawing 2D/3D graphic"]
 license = {text = "BSD 3-Clause"}
 classifiers = [

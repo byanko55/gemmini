@@ -26,7 +26,7 @@ def test_line2D_2():
     assert c.orthog(e)
 
 def test_line2D_3():
-    canva = Canvas(scale=1.5)
+    canva = Canvas()
 
     a = Line2D((1,0), slope=1.5)
     b = Line2D((-1,0), (0,2))
