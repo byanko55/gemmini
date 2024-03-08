@@ -141,6 +141,17 @@ class Canvas:
         """
         Plot all geometric object that the canvas holds.
         """
+        self._draw_figs()
+        plt.show()
+
+    def save(self, path:str) -> None:
+        """
+        Save the current figure.
+        """
+        self._draw_figs()
+        plt.savefig(path)
+    
+    def _draw_figs(self) -> None:
         plt.rc('font', family='DejaVu Sans', size=self.fontsize)
         fig=plt.figure(figsize=self.window_size, facecolor=self.theme['facecolor'])
         gem_configs = sorted(self.gems, key=lambda f: isinstance(f['fig'], Line2D))
@@ -227,8 +238,6 @@ class Canvas:
                     tag = "%s = %.2f"%('r' if isinstance(gem, Curve2D) else 'd', d)
                     self._plot_radius(gem, (x_d, y_d), False)
                     self._plot_classname(gem, (xc, y_min - tag_pos), tag)
-
-        plt.show()
 
     def _plot_line(self, gem:Line2D, g_config:dict) -> None:
         plt.axline(
@@ -583,7 +592,7 @@ class Canvas:
             tickness (int): size of a pixel.
             style (str): marker style.
                 {'.', 'o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X'}
-            fill (bool): whether fill pixels in the interior of the geometry.
+            fill (bool): whether fill in the interior of the geometry.
             show_edges (bool): whether draw path enclosing the given geometry.
             show_radius (bool): whether display a radius vector and its length.
             show_size (bool) : whether display a height/width of the geometry.
@@ -670,7 +679,7 @@ class Canvas:
             draw_style (str): marker/line style.
                 for line object: {'-', '--', '-.', ':', '', (offset, on-off-seq), ...}
                 for other geometry: {'.', 'o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X'}
-            fill (bool): whether fill pixels in the interior of the geometry.
+            fill (bool): whether fill in the interior of the geometry.
             show_edges (bool): whether draw path enclosing the given geometry.
             show_radius (bool): whether display a radius vector and its length.
             show_size (bool) : whether display a height/width of the geometry.
