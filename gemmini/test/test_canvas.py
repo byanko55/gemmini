@@ -19,7 +19,7 @@ def test_canvas_1():
     canva.plot()
 
 def test_canvas_2():
-    canva = Canvas(scale=2, minor_ticks=False)
+    canva = Canvas(scale=1.25, minor_ticks=False)
     
     a = Line2D((10,0), (0,15))
     b = Line2D((-1,-1), (5,2))
@@ -27,8 +27,8 @@ def test_canvas_2():
     c.translate(4, 8)
     
     canva.add(a, color='skyblue')
-    canva.add(b, draw_style='--')
-    canva.add(c, draw_style='*')
+    canva.add(b, style='--')
+    canva.add(c, style='*')
     canva.plot()
     
     canva.remove(a)

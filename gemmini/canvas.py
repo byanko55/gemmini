@@ -478,7 +478,7 @@ class Canvas:
                 x_min, y_min, x_max, y_max = g.bounding_box()
                 mx, Mx, my, My = min(mx, x_min), max(Mx, x_max), min(my, y_min), max(My, y_max)
 
-        box_size = max(0.01, max(Mx-mx, My-my)*self.scale)
+        box_size = max(0.01, max(Mx-mx, My-my)/self.scale)
         cx, cy = (Mx+mx)/2, (My+my)/2
 
         _p = floor(log10(2*box_size/3))
