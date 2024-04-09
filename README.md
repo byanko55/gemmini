@@ -1,6 +1,6 @@
 # Gemmini
 
-[![Pypi](https://img.shields.io/badge/pypi-1.0.1-blue.svg)](https://pypi.org/project/gemmini/)
+[![Pypi](https://img.shields.io/badge/pypi-1.0.2-blue.svg)](https://pypi.org/project/gemmini/)
 [![Python](https://img.shields.io/badge/python-%3E%3D%203.7-green.svg)](https://www.python.org/downloads/)
 [![pytest](https://github.com/byanko55/gemmini/actions/workflows/pytest.yml/badge.svg)](https://github.com/byanko55/gemmini/actions/workflows/pytest.yml)
 [![](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg)](https://opensource.org/licenses/MIT)
